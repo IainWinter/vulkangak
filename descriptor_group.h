@@ -26,8 +26,8 @@ public:
     VkDescriptorSet getSet(int setIndex);
     VkDescriptorSet getSet(int frameIndex, int setIndex);
 
-    void write(int frameIndex, int setIndex, Image* image, ImageSampler* sampler);
-    void write(int frameIndex, int setIndex, UniformBuffer* uniformBuffer);
+    void write(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler);
+    void write(int frameIndex, int bindingIndex, UniformBuffer* uniformBuffer);
 
 private:
     VkDevice m_device;

@@ -1,6 +1,6 @@
 #include "vertex_buffer.h"
 
-VertexBuffer::VertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t vertexSize, const void* data, size_t vertexCount)
+VertexBuffer::VertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t vertexSize, size_t vertexCount, const void* data)
     : Buffer        (device, 
                      physicalDevice, 
                      vertexSize * vertexCount,

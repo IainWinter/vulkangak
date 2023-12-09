@@ -606,8 +606,8 @@ Shader* RenderDevice::newShader(const VulkanVertexLayout& vertexLayout, const Vu
     return new Shader(m_logicalDevice, m_renderPass, vertexLayout, source);
 }
 
-VertexBuffer* RenderDevice::newVertexBuffer(const VulkanVertexLayout& vertexLayout, size_t vertexSize, const void* data, size_t vertexCount) {
-    return new VertexBuffer(m_logicalDevice, m_physicalDevice, vertexSize, data, vertexCount);
+VertexBuffer* RenderDevice::newVertexBuffer(const VulkanVertexLayout& vertexLayout, size_t vertexSize, size_t vertexCount, const void* data) {
+    return new VertexBuffer(m_logicalDevice, m_physicalDevice, vertexSize, vertexCount, data);
 }
 
 IndexBuffer* RenderDevice::newIndexBuffer(const std::vector<u32>& indices) {
@@ -732,7 +732,9 @@ void RenderDevice::submitFrame() {
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &m_currentImageIndex;
 
-    vk(vkQueuePresentKHR(m_presentQueue, &presentInfo));
+    // could get status
+    // when swapchain is out of date
+    vkQueuePresentKHR(m_presentQueue, &presentInfo);
 
     m_currentFrameIndex = (m_currentFrameIndex + 1) % m_framesInFlight;
 }

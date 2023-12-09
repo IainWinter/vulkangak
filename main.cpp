@@ -97,7 +97,7 @@ int main() {
 
     DescriptorGroup* descriptor = device->newDescriptorGroup({ textureLayout, uboLayout });
 
-    for (size_t i = 0; i < 2; i++) {
+    for (u32 i = 0; i < device->getFrameSyncInfo().framesInFlight(); i++) {
         descriptor->write(i, 0, image, imageSampler);
     }
 
@@ -122,17 +122,21 @@ int main() {
         if (device->waitBeginFrame(&frame)) {
             VkCommandBuffer commandBuffer = frame.commandBuffer;
 
-            mat4 model = rotate(mat4(1.0f), tick.time * radians(90.0f), vec3(0.0f, 0.0f, 1.0f));
+            mat4 model = rotate(mat4(1.0f), tick.applicationTime * radians(90.0f), vec3(0.0f, 0.0f, 1.0f));
             
+            float aspect = frame.width / (float)frame.height;
+            float width = 2 * aspect;
+
+            auto v = vertices;
+            v[0].pos.x = 1 * sin(tick.applicationTime);
+            vertexBuffer->setData(v.data());
+
             CameraUBO ubo{};
-            ubo.view = mat4(1.0f);
-            ubo.proj = mat4(1.0f);
-            // ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            // ubo.proj = glm::perspective(glm::radians(45.0f), frame.width / (float) frame.height, 0.1f, 10.0f);
-            // ubo.proj[1][1] *= -1;
+            ubo.view = mat4(1.f);
+            ubo.proj = glm::ortho(-width/2, width/2, -1.f, 1.f, -1.f, 1.f);
             
             camUBO->setData(&ubo);
-            descriptor->write(device->getFrameSyncInfo().frameIndex(), 1, camUBO);
+            descriptor->write(frame.frameIndex, 1, camUBO);
             
             device->beginScreenRenderPass();
 

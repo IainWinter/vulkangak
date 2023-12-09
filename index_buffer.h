@@ -2,7 +2,7 @@
 
 #include "buffer.h"
 
-class IndexBuffer : Buffer {
+class IndexBuffer : public Buffer {
 public:
     IndexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t indexCount, const u8* data);
     ~IndexBuffer();

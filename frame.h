@@ -13,6 +13,7 @@ public:
         , m_framesInFlight (framesInFlight)
     {}
 
+    u32 frameIndexNext() const { return (frameIndex() + 1) % framesInFlight(); }
     u32 frameIndex() const { return *m_frameIndex; }
     u32 imageIndex() const { return *m_imageIndex; }
     u32 framesInFlight() const { return *m_framesInFlight; }

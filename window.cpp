@@ -3,7 +3,12 @@
 
 Window::Window(const char* title, int width, int height) {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
-    m_sdlWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_VULKAN);
+    m_sdlWindow = SDL_CreateWindow(
+        title, 
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+        width, height, 
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN
+    );
 }
 
 Window::~Window() {

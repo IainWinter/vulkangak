@@ -47,7 +47,7 @@ public:
 
     Shader* newShader(const VulkanVertexLayout& vertexLayout, const VulkanShaderSource& source);
     
-    VertexBuffer* newVertexBuffer(const VulkanVertexLayout& vertexLayout, size_t vertexSize, const void* data, size_t vertexCount);
+    VertexBuffer* newVertexBuffer(const VulkanVertexLayout& vertexLayout, size_t vertexSize, size_t vertexCount, const void* data);
     IndexBuffer* newIndexBuffer(const std::vector<u32>& indices);
     CommandBuffer* newCommandBuffer();
     UniformBuffer* newUniformBuffer(size_t size);
@@ -82,7 +82,7 @@ public:
 
     template<typename _vertex_t>
     VertexBuffer* newVertexBuffer(const std::vector<_vertex_t>& vertices) {
-        return newVertexBuffer(_vertex_t::getLayout(), sizeof(_vertex_t), vertices.data(), vertices.size());
+        return newVertexBuffer(_vertex_t::getLayout(), sizeof(_vertex_t), vertices.size(), vertices.data());
     }
 
     template<typename _ubo_t>
