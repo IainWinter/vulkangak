@@ -1,0 +1,4 @@
+build
+subprojects
+assets.input
+shaders/bin
