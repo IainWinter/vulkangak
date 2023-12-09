@@ -97,7 +97,6 @@ int main() {
 
     DescriptorGroup* descriptor = device->newDescriptorGroup({ textureLayout, uboLayout });
 
-    // 2 is frames in flight
     for (size_t i = 0; i < 2; i++) {
         descriptor->write(i, 0, image, imageSampler);
     }
