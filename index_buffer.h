@@ -13,6 +13,6 @@ public:
     void bind(VkCommandBuffer commandBuffer);
     void draw(VkCommandBuffer commandBuffer);
 
-private:
+public:
     u32 m_indexCount;
 };

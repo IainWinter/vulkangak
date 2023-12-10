@@ -51,9 +51,21 @@ void Buffer::setData(const void* data) {
     unmap();
 }
 
+void Buffer::setData(u32 offset, u32 size, const void* data) {
+    void* mappedPtr = map(offset, size);
+    memcpy(mappedPtr, data, size);
+    unmap();
+}
+
 void* Buffer::map() {
     void* mappedPtr;
     vk(vkMapMemory(m_device, m_memory, 0, m_size, 0, &mappedPtr));
+    return mappedPtr;
+}
+
+void* Buffer::map(u32 offset, u32 size) {
+    void* mappedPtr;
+    vk(vkMapMemory(m_device, m_memory, offset, size, 0, &mappedPtr));
     return mappedPtr;
 }
 

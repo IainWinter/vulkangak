@@ -18,14 +18,14 @@ struct VulkanSwapChainImage {
 };
 
 struct VulkanFrame {
-    VkCommandBuffer commandBuffer;
+    CommandBuffer* commandBuffer;
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence inFlightFence;
 };
 
 struct VulkanFrameImage {
-    VkCommandBuffer commandBuffer;
+    CommandBuffer* commandBuffer;
     u32 width;
     u32 height;
 
@@ -45,9 +45,9 @@ public:
 
     DescriptorGroup* newDescriptorGroup(const std::vector<DescriptorBinding>& descriptors);
 
-    Shader* newShader(const VulkanVertexLayout& vertexLayout, const VulkanShaderSource& source);
+    Shader* newShader(const VulkanShaderSource& source);
     
-    VertexBuffer* newVertexBuffer(const VulkanVertexLayout& vertexLayout, size_t vertexSize, size_t vertexCount, const void* data);
+    VertexBuffer* newVertexBuffer(size_t vertexSize, size_t vertexCount, const void* data);
     IndexBuffer* newIndexBuffer(const std::vector<u32>& indices);
     CommandBuffer* newCommandBuffer();
     UniformBuffer* newUniformBuffer(size_t size);
@@ -76,13 +76,8 @@ public:
     void submitToGraphicsQueue(CommandBuffer* commandBuffer);
 
     template<typename _vertex_t>
-    Shader* newShader(const VulkanShaderSource& source) {
-        return newShader(_vertex_t::getLayout(), source);
-    }
-
-    template<typename _vertex_t>
     VertexBuffer* newVertexBuffer(const std::vector<_vertex_t>& vertices) {
-        return newVertexBuffer(_vertex_t::getLayout(), sizeof(_vertex_t), vertices.size(), vertices.data());
+        return newVertexBuffer(sizeof(_vertex_t), vertices.size(), vertices.data());
     }
 
     template<typename _ubo_t>

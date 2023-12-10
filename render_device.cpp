@@ -285,7 +285,6 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
-    // tbd
 
     VkDeviceCreateInfo deviceInfo{};
     deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -325,14 +324,15 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     // Create frames in flight
 
     for (u32 i = 0; i < m_framesInFlight; i++) {
-        VkCommandBufferAllocateInfo commandBufferAllocInfo{};
-        commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        commandBufferAllocInfo.commandPool = m_commandPool;
-        commandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocInfo.commandBufferCount = 1;
+        CommandBuffer* commandBuffer = new CommandBuffer(m_logicalDevice, m_commandPool);
 
-        VkCommandBuffer commandBuffer;
-        vk(vkAllocateCommandBuffers(m_logicalDevice, &commandBufferAllocInfo, &commandBuffer));
+        // VkCommandBufferAllocateInfo commandBufferAllocInfo{};
+        // commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        // commandBufferAllocInfo.commandPool = m_commandPool;
+        // commandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        // commandBufferAllocInfo.commandBufferCount = 1;
+        // VkCommandBuffer commandBuffer;
+        // vk(vkAllocateCommandBuffers(m_logicalDevice, &commandBufferAllocInfo, &commandBuffer));
 
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -602,11 +602,11 @@ DescriptorGroup* RenderDevice::newDescriptorGroup(const std::vector<DescriptorBi
     return new DescriptorGroup(m_logicalDevice, frame, descriptors);
 }
 
-Shader* RenderDevice::newShader(const VulkanVertexLayout& vertexLayout, const VulkanShaderSource& source) {
-    return new Shader(m_logicalDevice, m_renderPass, vertexLayout, source);
+Shader* RenderDevice::newShader(const VulkanShaderSource& source) {
+    return new Shader(m_logicalDevice, m_renderPass, source);
 }
 
-VertexBuffer* RenderDevice::newVertexBuffer(const VulkanVertexLayout& vertexLayout, size_t vertexSize, size_t vertexCount, const void* data) {
+VertexBuffer* RenderDevice::newVertexBuffer(size_t vertexSize, size_t vertexCount, const void* data) {
     return new VertexBuffer(m_logicalDevice, m_physicalDevice, vertexSize, vertexCount, data);
 }
 
@@ -685,12 +685,12 @@ bool RenderDevice::waitBeginFrame(VulkanFrameImage* pFrame) {
     }
 
     vk(vkResetFences(m_logicalDevice, 1, &frame.inFlightFence));
-    vk(vkResetCommandBuffer(frame.commandBuffer, 0));
+    vk(vkResetCommandBuffer(frame.commandBuffer->m_commandBuffer, 0));
 
     VkCommandBufferBeginInfo commandBufferBeginInfo{};
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    vk(vkBeginCommandBuffer(frame.commandBuffer, &commandBufferBeginInfo));
+    vk(vkBeginCommandBuffer(frame.commandBuffer->m_commandBuffer, &commandBufferBeginInfo));
 
     pFrame->commandBuffer = frame.commandBuffer;
     pFrame->width = m_extent.width;
@@ -704,8 +704,6 @@ bool RenderDevice::waitBeginFrame(VulkanFrameImage* pFrame) {
 void RenderDevice::submitFrame() {
     VulkanFrame frame = m_frames[m_currentFrameIndex];
 
-    vk(vkEndCommandBuffer(frame.commandBuffer));
-
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     VkSemaphore waitSemaphores[] = { frame.imageAvailableSemaphore };
     VkSemaphore signalSemaphores[] = { frame.renderFinishedSemaphore };
@@ -718,7 +716,7 @@ void RenderDevice::submitFrame() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &frame.commandBuffer;
+    submitInfo.pCommandBuffers = &frame.commandBuffer->m_commandBuffer;
 
     vk(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, frame.inFlightFence));
 
@@ -754,7 +752,7 @@ void RenderDevice::beginScreenRenderPass() {
     renderPassBeginInfo.clearValueCount = 1;
     renderPassBeginInfo.pClearValues = &clearColor;
 
-    vkCmdBeginRenderPass(frame.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(frame.commandBuffer->m_commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     VkViewport pipelineViewport{};
     pipelineViewport.x = 0.0f;
@@ -768,8 +766,8 @@ void RenderDevice::beginScreenRenderPass() {
     pipelineScissor.offset = { 0, 0 };
     pipelineScissor.extent = m_extent;
     
-    vkCmdSetViewport(frame.commandBuffer, 0, 1, &pipelineViewport);
-    vkCmdSetScissor(frame.commandBuffer, 0, 1, &pipelineScissor);
+    vkCmdSetViewport(frame.commandBuffer->m_commandBuffer, 0, 1, &pipelineViewport);
+    vkCmdSetScissor(frame.commandBuffer->m_commandBuffer, 0, 1, &pipelineScissor);
 }
 
 void RenderDevice::waitUntilIdle() {

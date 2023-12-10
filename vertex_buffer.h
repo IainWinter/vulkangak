@@ -10,10 +10,6 @@ public:
     VertexBuffer(const VertexBuffer&) = delete;
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
-    void bind(VkCommandBuffer commandBuffer);
-    
-    void draw(VkCommandBuffer commandBuffer);
-
-private:
+public:
     u32 m_vertexCount;
 };

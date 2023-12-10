@@ -1,11 +1,34 @@
 #include "command_buffer.h"
 #include "vk_error.h"
+
+#include "shader.h"
+#include "vertex_buffer.h"
+#include "index_buffer.h"
+
 #include <stdexcept>
 
+// helpers
+
+struct DrawCall {
+    std::vector<VkBuffer> buffers;
+    std::vector<VkDeviceSize> offsets;
+};
+
+DrawCall unrollDrawCall(const std::vector<VertexBuffer*>& vertexBuffers) {
+    std::vector<VkBuffer> buffers;
+    std::vector<VkDeviceSize> offsets;
+
+    for (VertexBuffer* vertexBuffer : vertexBuffers) {
+        buffers.push_back(vertexBuffer->m_buffer);
+        offsets.push_back(0);
+    }
+
+    return { buffers, offsets };
+}
+
 CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool commandPool) 
-    : m_device        (device)
-    , m_commandPool   (commandPool)
-    , m_commandBuffer (VK_NULL_HANDLE)
+    : m_device      (device)
+    , m_commandPool (commandPool)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -17,6 +40,10 @@ CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool commandPool)
 }
 
 CommandBuffer::~CommandBuffer() {
+    if (m_device == VK_NULL_HANDLE) {
+        return;
+    }
+    
     vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_commandBuffer);
 }
 
@@ -107,4 +134,38 @@ void CommandBuffer::transitionImageFormat(VkImage image, VkFormat format, VkImag
     }
 
     vkCmdPipelineBarrier(m_commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
+void CommandBuffer::setShader(Shader* shader) {
+    vkCmdBindPipeline(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_pipeline);
+}
+
+void CommandBuffer::pushConstant(Shader* shader, u32 index, const void* data) {
+    VulkanPushConstant constant = shader->getPushConstant(index);
+    vkCmdPushConstants(m_commandBuffer, shader->m_pipelineLayout, constant.stages, 0, constant.size, data);
+}
+
+void CommandBuffer::bindDescriptorSet(Shader* shader, VkDescriptorSet descriptorSet) {
+    vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);    
+}
+
+void CommandBuffer::draw(const std::vector<VertexBuffer*>& vertexBuffers) {
+    drawInstanced(1, vertexBuffers);
+}
+
+void CommandBuffer::draw(IndexBuffer* indexBuffer, const std::vector<VertexBuffer*>& vertexBuffers) {
+    drawInstanced(1, indexBuffer, vertexBuffers);
+}
+
+void CommandBuffer::drawInstanced(int instanceCount, const std::vector<VertexBuffer*>& vertexBuffers) {
+    DrawCall drawCall = unrollDrawCall(vertexBuffers);
+    vkCmdBindVertexBuffers(m_commandBuffer, 0, drawCall.buffers.size(), drawCall.buffers.data(), drawCall.offsets.data());
+    vkCmdDraw(m_commandBuffer, vertexBuffers.at(0)->m_vertexCount, instanceCount, 0, 0);
+}
+
+void CommandBuffer::drawInstanced(int instanceCount, IndexBuffer* indexBuffer, const std::vector<VertexBuffer*>& vertexBuffers) {
+    DrawCall drawCall = unrollDrawCall(vertexBuffers);
+    vkCmdBindVertexBuffers(m_commandBuffer, 0, drawCall.buffers.size(), drawCall.buffers.data(), drawCall.offsets.data());
+    vkCmdBindIndexBuffer(m_commandBuffer, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(m_commandBuffer, indexBuffer->m_indexCount, instanceCount, 0, 0, 0);
 }

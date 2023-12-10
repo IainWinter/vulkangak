@@ -20,24 +20,24 @@ struct VulkanShaderSource {
 
     std::vector<VulkanPushConstant> pushConstants;
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+    std::vector<VulkanVertexLayout> vertexInputs;
 };
 
 class Shader {
 public:
-    Shader(VkDevice device, VkRenderPass renderPass, const VulkanVertexLayout& vertexLayout, const VulkanShaderSource& source);
+    Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSource& source);
     ~Shader();
 
     Shader(const Shader&) = delete;
     Shader& operator=(const Shader&) = delete;
 
-    void use(VkCommandBuffer commandBuffer);
-    void pushConstant(VkCommandBuffer commandBuffer, size_t i, const void* data);
-    void bindDescriptorSet(VkCommandBuffer commandBuffer, VkDescriptorSet descriptorSet);
+    VulkanPushConstant getPushConstant(u32 index);
 
+public:
+    VkPipeline m_pipeline;
     VkPipelineLayout m_pipelineLayout;
+
 private:
     VkDevice m_device;
-    VkPipeline m_pipeline;
-
     std::vector<VulkanPushConstant> m_pushConstants;
 };

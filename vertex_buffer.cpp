@@ -13,13 +13,3 @@ VertexBuffer::VertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, siz
 
 VertexBuffer::~VertexBuffer() {
 }
-
-void VertexBuffer::bind(VkCommandBuffer commandBuffer) {
-    VkBuffer vertexBuffers[] = { m_buffer };
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-}
-
-void VertexBuffer::draw(VkCommandBuffer commandBuffer) {
-    vkCmdDraw(commandBuffer, m_vertexCount, 1, 0, 0);
-}

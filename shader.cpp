@@ -2,21 +2,33 @@
 #include "vk_error.h"
 #include <stdexcept>
 
-Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanVertexLayout& vertexLayout, const VulkanShaderSource& source) 
+Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSource& source) 
     : m_device        (device)
     , m_pushConstants (source.pushConstants)
 {
+    // Assembly, this defines the type of primitive to draw
+
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyInfo{};
     pipelineInputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     pipelineInputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     pipelineInputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+    
+    // Vertex input, this defines the vertex format and how to combine multiple vertex buffers together
+
+    // Need to unroll the vertex input layouts
+    std::vector<VkVertexInputBindingDescription> bindings;
+    std::vector<VkVertexInputAttributeDescription> attributes;
+    for (const VulkanVertexLayout& vertexLayout : source.vertexInputs) {
+        bindings.push_back(vertexLayout.description);
+        attributes.insert(attributes.end(), vertexLayout.attributes.begin(), vertexLayout.attributes.end());
+    }
 
     VkPipelineVertexInputStateCreateInfo pipelineVertexInputInfo{};
     pipelineVertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    pipelineVertexInputInfo.vertexBindingDescriptionCount = 1;
-    pipelineVertexInputInfo.pVertexBindingDescriptions = &vertexLayout.description;
-    pipelineVertexInputInfo.vertexAttributeDescriptionCount = vertexLayout.attributes.size();
-    pipelineVertexInputInfo.pVertexAttributeDescriptions = vertexLayout.attributes.data();
+    pipelineVertexInputInfo.vertexBindingDescriptionCount = (u32)bindings.size();
+    pipelineVertexInputInfo.pVertexBindingDescriptions = bindings.data();
+    pipelineVertexInputInfo.vertexAttributeDescriptionCount = (u32)attributes.size();
+    pipelineVertexInputInfo.pVertexAttributeDescriptions = attributes.data();
 
     std::vector<VkDynamicState> pipelineDynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -144,19 +156,6 @@ Shader::~Shader() {
     vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 }
 
-void Shader::use(VkCommandBuffer commandBuffer) {
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-}
-
-void Shader::pushConstant(VkCommandBuffer commandBuffer, size_t i, const void* data) {
-    if (i >= m_pushConstants.size()) {
-        throw std::runtime_error("Mismatched number of push constants");
-    }
-
-    const VulkanPushConstant& pushConstant = m_pushConstants.at(i);
-    vkCmdPushConstants(commandBuffer, m_pipelineLayout, pushConstant.stages, 0, pushConstant.size, data);
-}
-
-void Shader::bindDescriptorSet(VkCommandBuffer commandBuffer, VkDescriptorSet descriptorSet) {
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);    
+VulkanPushConstant Shader::getPushConstant(u32 index) { 
+    return m_pushConstants.at(index);
 }

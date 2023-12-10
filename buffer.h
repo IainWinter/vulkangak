@@ -15,8 +15,11 @@ public:
 
     // memcpy from data to data + size (from constructor) into a mapped region device memory
     void setData(const void* data);
+    void setData(u32 offset, u32 size, const void* data);
 
     void* map();
+    void* map(u32 offset, u32 size);
+
     void unmap();
 
 public:
