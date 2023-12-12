@@ -1,18 +1,23 @@
 project('vkTestCpp', 'cpp', default_options: ['cpp_std=c++17'])
 
 sources = [
-    'window.cpp',
-    'simulation_loop.cpp',
-    'render_device.cpp',
-    'descriptor_group.cpp',
-    'shader.cpp',
-    'buffer.cpp',
-    'vertex_buffer.cpp',
-    'index_buffer.cpp',
-    'uniform_buffer.cpp',
-    'command_buffer.cpp',
-    'image.cpp',
-    'main.cpp'
+    'src/window.cpp',
+    'src/main.cpp',
+    'src/simulation_loop.cpp',
+
+    'src/render/render_device.cpp',
+    'src/render/descriptor_group.cpp',
+    'src/render/command_buffer.cpp',
+    'src/render/shader.cpp',
+    'src/render/image.cpp',
+    'src/render/buffer.cpp',
+    'src/render/vertex_buffer.cpp',
+    'src/render/index_buffer.cpp',
+    'src/render/uniform_buffer.cpp',
+]
+
+include_dirs = [
+    'src'
 ]
 
 deps = [
@@ -23,4 +28,4 @@ deps = [
 
 args = ['-DSDL_MAIN_HANDLED=1']
 
-executable('vkTestCpp', sources, dependencies: deps, cpp_args: args)
+executable('vkTestCpp', sources, include_directories: include_dirs, dependencies: deps, cpp_args: args)

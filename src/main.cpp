@@ -1,7 +1,7 @@
 #include "SDL.h"
 #include "vulkan/vulkan.hpp"
 
-#include "render_device.h"
+#include "render/render_device.h"
 #include "simulation_loop.h"
 #include "asset_compiler/package.h"
 
@@ -19,7 +19,6 @@
 struct Vertex {
     vec2 pos;
     vec2 uv;
-    vec4 color;
 
     static VulkanVertexLayout getLayout() {
         VkVertexInputBindingDescription description{};
@@ -27,7 +26,7 @@ struct Vertex {
         description.stride = sizeof(Vertex);
         description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-        std::vector<VkVertexInputAttributeDescription> attributes(3);
+        std::vector<VkVertexInputAttributeDescription> attributes(2);
         attributes[0].binding = 0;
         attributes[0].location = 0;
         attributes[0].format = VK_FORMAT_R32G32_SFLOAT;
@@ -38,11 +37,6 @@ struct Vertex {
         attributes[1].format = VK_FORMAT_R32G32_SFLOAT;
         attributes[1].offset = offsetof(Vertex, uv);
 
-        attributes[2].binding = 0;
-        attributes[2].location = 2;
-        attributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributes[2].offset = offsetof(Vertex, color);
-
         return { description, attributes };
     }
 };
@@ -52,37 +46,44 @@ struct ModelMatrixVertex {
     vec2 scale;
     float rotation;
 
+    vec4 color;
+
     static VulkanVertexLayout getLayout() {
         VkVertexInputBindingDescription description{};
         description.binding = 1;
         description.stride = sizeof(ModelMatrixVertex);
         description.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
-        std::vector<VkVertexInputAttributeDescription> attributes(3);
+        std::vector<VkVertexInputAttributeDescription> attributes(4);
         attributes[0].binding = 1;
-        attributes[0].location = 3;
+        attributes[0].location = 2;
         attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributes[0].offset = offsetof(ModelMatrixVertex, position);
 
         attributes[1].binding = 1;
-        attributes[1].location = 4;
+        attributes[1].location = 3;
         attributes[1].format = VK_FORMAT_R32G32_SFLOAT;
         attributes[1].offset = offsetof(ModelMatrixVertex, scale);
 
         attributes[2].binding = 1;
-        attributes[2].location = 5;
+        attributes[2].location = 4;
         attributes[2].format = VK_FORMAT_R32_SFLOAT;
         attributes[2].offset = offsetof(ModelMatrixVertex, rotation);
+
+        attributes[3].binding = 1;
+        attributes[3].location = 5;
+        attributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        attributes[3].offset = offsetof(ModelMatrixVertex, color);
 
         return { description, attributes };
     }
 };
 
 static const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {0, 1}, {1.0f, 1.0f, 1.0f, .1f}}, // 0  2
-    {{-0.5f,  0.5f}, {0, 0}, {1.0f, 1.0f, 1.0f, .1f}}, // 1  3
-    {{ 0.5f, -0.5f}, {1, 1}, {1.0f, 1.0f, 1.0f, .1f}},
-    {{ 0.5f,  0.5f}, {1, 0}, {1.0f, 1.0f, 1.0f, .1f}}
+    {{-0.5f, -0.5f}, {0, 1}}, // 0  2
+    {{-0.5f,  0.5f}, {0, 0}}, // 1  3
+    {{ 0.5f, -0.5f}, {1, 1}},
+    {{ 0.5f,  0.5f}, {1, 0}}
 };
 
 static const std::vector<u32> indices = {
@@ -106,7 +107,11 @@ float random() {
     return rand() / (float)RAND_MAX;
 }
 
-vec2 lerp(vec2 a, vec2 b, float w) {
+vec2 lerp(const vec2& a, const vec2& b, float w) {
+    return a * (1.f - w) + b * w;
+}
+
+vec4 lerp(const vec4& a, const vec4& b, float w) {
     return a * (1.f - w) + b * w;
 }
 
@@ -192,7 +197,7 @@ int main() {
             acc += tick.deltaTime;
             if (acc > .1) {
                 acc = 0;
-                particles.push_back({vec3(0.f), vec2(1.f), 0.f});
+                particles.push_back({vec3(0.f), vec2(0.f), 0.f});
 
                 SmokeParticle p;
                 p.velocity = vec2(random() * 2.f - 1.f, random()) / vec2(3, -1);
@@ -204,7 +209,8 @@ int main() {
             for (int i = 0; i < particles.size(); i++) {
                 ModelMatrixVertex& v = particles[i];
                 v.position += vec3(particleInfo[i].velocity * tick.deltaTime, 0.f);
-                v.scale = lerp(v.scale, vec2(0.f), tick.deltaTime);
+                v.scale = lerp(v.scale, vec2(1.f), tick.deltaTime);
+                v.color = lerp(v.color, vec4(1, 1, 1, .4), tick.deltaTime); 
 
                 particleInfo[i].life -= tick.deltaTime;
 

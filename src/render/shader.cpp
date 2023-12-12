@@ -63,11 +63,11 @@ Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSourc
     VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentInfo{};
     pipelineColorBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     pipelineColorBlendAttachmentInfo.blendEnable = VK_TRUE;
-    pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
     pipelineColorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
-    pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     pipelineColorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo pipelineColorBlending{};
