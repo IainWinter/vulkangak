@@ -149,23 +149,24 @@ void CommandBuffer::bindDescriptorSet(Shader* shader, VkDescriptorSet descriptor
     vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);    
 }
 
-void CommandBuffer::draw(const std::vector<VertexBuffer*>& vertexBuffers) {
-    drawInstanced(1, vertexBuffers);
+void CommandBuffer::bindVertexBuffers(u32 count, VertexBuffer* vertexBuffers[]) {
+    for (u32 i = 0; i < count; i++) {
+        m_vertexBuffers[i] = vertexBuffers[i]->m_buffer;
+        m_offsets[i] = 0;
+    }
+
+    vkCmdBindVertexBuffers(m_commandBuffer, 0, count, m_vertexBuffers, m_offsets);
 }
 
-void CommandBuffer::draw(IndexBuffer* indexBuffer, const std::vector<VertexBuffer*>& vertexBuffers) {
-    drawInstanced(1, indexBuffer, vertexBuffers);
-}
-
-void CommandBuffer::drawInstanced(int instanceCount, const std::vector<VertexBuffer*>& vertexBuffers) {
-    DrawCall drawCall = unrollDrawCall(vertexBuffers);
-    vkCmdBindVertexBuffers(m_commandBuffer, 0, drawCall.buffers.size(), drawCall.buffers.data(), drawCall.offsets.data());
-    vkCmdDraw(m_commandBuffer, vertexBuffers.at(0)->m_vertexCount, instanceCount, 0, 0);
-}
-
-void CommandBuffer::drawInstanced(int instanceCount, IndexBuffer* indexBuffer, const std::vector<VertexBuffer*>& vertexBuffers) {
-    DrawCall drawCall = unrollDrawCall(vertexBuffers);
-    vkCmdBindVertexBuffers(m_commandBuffer, 0, drawCall.buffers.size(), drawCall.buffers.data(), drawCall.offsets.data());
+void CommandBuffer::bindIndexBuffer(IndexBuffer* indexBuffer) {
+    // VK_INDEX_TYPE_UINT32 is leaked abstraction
     vkCmdBindIndexBuffer(m_commandBuffer, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(m_commandBuffer, indexBuffer->m_indexCount, instanceCount, 0, 0, 0);
+}
+
+void CommandBuffer::draw(u32 vertexCount, u32 instanceCount) {
+    vkCmdDraw(m_commandBuffer, vertexCount, instanceCount, 0, 0);
+}
+
+void CommandBuffer::drawIndexed(u32 indexCount, u32 instanceCount) {
+    vkCmdDrawIndexed(m_commandBuffer, indexCount, instanceCount, 0, 0, 0);
 }

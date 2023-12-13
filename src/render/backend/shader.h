@@ -23,6 +23,16 @@ struct VulkanShaderSource {
     std::vector<VulkanVertexLayout> vertexInputs;
 };
 
+class VertexLayoutBuilder {
+public:
+    VertexLayoutBuilder& buffer(size_t size, bool instanced);
+    VertexLayoutBuilder& attribute(u32 location, size_t offset, VkFormat format);
+    std::vector<VulkanVertexLayout> build() const;
+
+private:
+    std::vector<VulkanVertexLayout> buffers;
+};
+
 class Shader {
 public:
     Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSource& source);

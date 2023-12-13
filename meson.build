@@ -5,15 +5,15 @@ sources = [
     'src/main.cpp',
     'src/simulation_loop.cpp',
 
-    'src/render/render_device.cpp',
-    'src/render/descriptor_group.cpp',
-    'src/render/command_buffer.cpp',
-    'src/render/shader.cpp',
-    'src/render/image.cpp',
-    'src/render/buffer.cpp',
-    'src/render/vertex_buffer.cpp',
-    'src/render/index_buffer.cpp',
-    'src/render/uniform_buffer.cpp',
+    'src/render/backend/render_device.cpp',
+    'src/render/backend/descriptor_group.cpp',
+    'src/render/backend/command_buffer.cpp',
+    'src/render/backend/shader.cpp',
+    'src/render/backend/image.cpp',
+    'src/render/backend/buffer.cpp',
+    'src/render/backend/vertex_buffer.cpp',
+    'src/render/backend/index_buffer.cpp',
+    'src/render/backend/uniform_buffer.cpp',
 ]
 
 include_dirs = [
