@@ -74,7 +74,8 @@
         "xutility": "cpp",
         "fstream": "cpp",
         "set": "cpp",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "random": "cpp"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

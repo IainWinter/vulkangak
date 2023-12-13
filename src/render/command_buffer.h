@@ -31,11 +31,11 @@ public:
     void pushConstant(Shader* shader, u32 index, const void* data);
     void bindDescriptorSet(Shader* shader, VkDescriptorSet descriptorSet);
 
-    void draw(const std::vector<VertexBuffer*>& vertexBuffers);
-    void draw(IndexBuffer* indexBuffer, const std::vector<VertexBuffer*>& vertexBuffers);
+    void bindVertexBuffers(u32 count, VertexBuffer* vertexBuffers[]);
+    void bindIndexBuffer(IndexBuffer* indexBuffer);
 
-    void drawInstanced(int instanceCount, const std::vector<VertexBuffer*>& vertexBuffers);
-    void drawInstanced(int instanceCount, IndexBuffer* indexBuffer, const std::vector<VertexBuffer*>& vertexBuffers);
+    void draw(u32 vertexCount, u32 instanceCount);
+    void drawIndexed(u32 indexCount, u32 instanceCount);
 
 public:
     VkCommandBuffer m_commandBuffer;
@@ -43,4 +43,9 @@ public:
 private:
     VkDevice m_device;
     VkCommandPool m_commandPool;
+
+    // This is a little hack to stop reallocating vertex buffers a bunch in bindVertexBuffers
+    // 4 limit is arbitrary
+    VkBuffer m_vertexBuffers[4];
+    VkDeviceSize m_offsets[4];
 };

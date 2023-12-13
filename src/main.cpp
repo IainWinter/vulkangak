@@ -12,86 +12,133 @@
 #include <fstream>
 #include <chrono>
 #include <unordered_map>
+#include <functional>
 
-// getLayout functions make no sense as they are tied to the shader
-// not the vertex
+template<typename _t>
+class ParticleMesh {
+public:
+    struct Vertex {
+        vec2 pos, uv;
+    };
 
-struct Vertex {
-    vec2 pos;
-    vec2 uv;
+    struct Instance {
+        vec3 pos;
+        vec2 scale;
+        float rotation;
+        vec4 color;
+    };
 
-    static VulkanVertexLayout getLayout() {
-        VkVertexInputBindingDescription description{};
-        description.binding = 0;
-        description.stride = sizeof(Vertex);
-        description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    ParticleMesh(RenderDevice* device, size_t batchSize) {
+        quadBuffer = device->newVertexBuffer<Vertex>(vertices);
+        indexBuffer = device->newIndexBuffer(indices);
+        instanceBuffer = device->newVertexBuffer(sizeof(Instance), batchSize, nullptr);
+    }
 
-        std::vector<VkVertexInputAttributeDescription> attributes(2);
-        attributes[0].binding = 0;
-        attributes[0].location = 0;
-        attributes[0].format = VK_FORMAT_R32G32_SFLOAT;
-        attributes[0].offset = offsetof(Vertex, pos);
+    ~ParticleMesh() {
+        delete quadBuffer;
+        delete indexBuffer;
+        delete instanceBuffer;
+    }
 
-        attributes[1].binding = 0;
-        attributes[1].location = 1;
-        attributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-        attributes[1].offset = offsetof(Vertex, uv);
+    void sendToDevice() {
+        // If there is no data, skip
+        // Nothing will get drawn anyways
+        if (instances.size() == 0) {
+            return;
+        }
+        
+        if (instances.size() > 100) {
+            return;
+        }
 
-        return { description, attributes };
+        instanceBuffer->setData(0, sizeof(Instance) * instances.size(), instances.data());
+    }
+
+    void draw(CommandBuffer& cmd) {
+        VertexBuffer* buffers[2] = { quadBuffer, instanceBuffer };
+
+        cmd.bindVertexBuffers(2, buffers);
+        cmd.bindIndexBuffer(indexBuffer);
+        cmd.drawIndexed(indices.size(), instances.size());
+    }
+
+    void add(const Instance& instance, const _t& data) {
+        addList.push_back({ instance, data });
+    }
+
+    void remove(u32 index) {
+        removeList.push_back(index);
+    }
+
+    void commit() {
+        for (const u32& i : removeList) {
+            instances.at(i) = instances.back();
+            instances.pop_back();
+
+            particleCPUData.at(i) = particleCPUData.back();
+            particleCPUData.pop_back();
+        }
+        removeList.clear();
+
+        for (const std::pair<Instance, _t>& p : addList) {
+            instances.push_back(p.first);
+            particleCPUData.push_back(p.second);
+        }
+        addList.clear();
+    }
+
+    void update(const std::function<void(u32 index, Instance&, _t& data)>& func) {
+        for (u32 i = 0; i < instances.size(); i++) {
+            func(i, instances[i], particleCPUData[i]);
+        }
+    }
+
+private:
+    // annoying that these need to be vectors
+    // there is no reason for that besides the creation api
+
+    const std::vector<Vertex> vertices = {
+        {{-0.5f, -0.5f}, {0, 1}}, // 0  2
+        {{-0.5f,  0.5f}, {0, 0}}, // 1  3
+        {{ 0.5f, -0.5f}, {1, 1}},
+        {{ 0.5f,  0.5f}, {1, 0}}
+    };
+
+    const std::vector<u32> indices = {
+        0, 2, 1,
+        1, 2, 3
+    };
+
+    VertexBuffer* quadBuffer;
+    IndexBuffer* indexBuffer;
+
+    // For now there can only be a single batch
+    std::vector<Instance> instances;
+    VertexBuffer* instanceBuffer;
+
+    // The CPU side of the particle system for simulating the particles
+    std::vector<_t> particleCPUData;
+
+    // Commit list for adding / removing while in update
+    std::vector<u32> removeList;
+    std::vector<std::pair<Instance, _t>> addList;
+
+// Statics
+
+public:
+    static std::vector<VulkanVertexLayout> getLayout() {
+        return VertexLayoutBuilder()
+            .buffer(sizeof(Vertex), false)
+                .attribute(0, offsetof(Vertex, pos), VK_FORMAT_R32G32_SFLOAT)
+                .attribute(1, offsetof(Vertex, uv),  VK_FORMAT_R32G32_SFLOAT)
+            .buffer(sizeof(Instance), true)
+                .attribute(2, offsetof(Instance, pos),      VK_FORMAT_R32G32B32_SFLOAT)
+                .attribute(3, offsetof(Instance, scale),    VK_FORMAT_R32G32_SFLOAT)
+                .attribute(4, offsetof(Instance, rotation), VK_FORMAT_R32_SFLOAT)
+                .attribute(5, offsetof(Instance, color),    VK_FORMAT_R32G32B32A32_SFLOAT)
+            .build();
     }
 };
-
-struct ModelMatrixVertex {
-    vec3 position;
-    vec2 scale;
-    float rotation;
-
-    vec4 color;
-
-    static VulkanVertexLayout getLayout() {
-        VkVertexInputBindingDescription description{};
-        description.binding = 1;
-        description.stride = sizeof(ModelMatrixVertex);
-        description.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-
-        std::vector<VkVertexInputAttributeDescription> attributes(4);
-        attributes[0].binding = 1;
-        attributes[0].location = 2;
-        attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributes[0].offset = offsetof(ModelMatrixVertex, position);
-
-        attributes[1].binding = 1;
-        attributes[1].location = 3;
-        attributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-        attributes[1].offset = offsetof(ModelMatrixVertex, scale);
-
-        attributes[2].binding = 1;
-        attributes[2].location = 4;
-        attributes[2].format = VK_FORMAT_R32_SFLOAT;
-        attributes[2].offset = offsetof(ModelMatrixVertex, rotation);
-
-        attributes[3].binding = 1;
-        attributes[3].location = 5;
-        attributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributes[3].offset = offsetof(ModelMatrixVertex, color);
-
-        return { description, attributes };
-    }
-};
-
-static const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {0, 1}}, // 0  2
-    {{-0.5f,  0.5f}, {0, 0}}, // 1  3
-    {{ 0.5f, -0.5f}, {1, 1}},
-    {{ 0.5f,  0.5f}, {1, 0}}
-};
-
-static const std::vector<u32> indices = {
-    0, 2, 1,
-    1, 2, 3
-};
-
-static std::vector<ModelMatrixVertex> insts = {};
 
 struct CameraUBO {
     mat4 view;
@@ -102,18 +149,6 @@ struct SmokeParticle {
     vec2 velocity;
     float life;
 };
-
-float random() {
-    return rand() / (float)RAND_MAX;
-}
-
-vec2 lerp(const vec2& a, const vec2& b, float w) {
-    return a * (1.f - w) + b * w;
-}
-
-vec4 lerp(const vec4& a, const vec4& b, float w) {
-    return a * (1.f - w) + b * w;
-}
 
 int main() {
     AssetPackage package = loadPackage("C:/dev/vkTestCpp/assets.bin");
@@ -152,19 +187,12 @@ int main() {
     shaderSource.descriptorSetLayouts = {
         descriptor->getLayout(0)
     };
-    shaderSource.vertexInputs = {
-        Vertex::getLayout(),
-        ModelMatrixVertex::getLayout()
-    };
+    shaderSource.vertexInputs = ParticleMesh<SmokeParticle>::getLayout();
 
     Shader* shader = device->newShader(shaderSource);
     UniformBuffer* camUBO = device->newUniformBuffer<CameraUBO>();
 
-    VertexBuffer* vertexBuffer = device->newVertexBuffer<Vertex>(vertices);
-
-    insts.resize(100);
-    VertexBuffer* instanceBuffer = device->newVertexBuffer<ModelMatrixVertex>(insts);
-    IndexBuffer* indexBuffer = device->newIndexBuffer(indices);
+    ParticleMesh<SmokeParticle>* particleMesh = new ParticleMesh<SmokeParticle>(device, 100);
 
     // Create the image
 
@@ -175,9 +203,6 @@ int main() {
     for (u32 i = 0; i < device->getFrameSyncInfo().framesInFlight(); i++) {
         descriptor->write(i, 0, image, imageSampler);
     }
-
-    std::vector<ModelMatrixVertex> particles;
-    std::vector<SmokeParticle> particleInfo;
 
     float acc = 0.f;
 
@@ -197,37 +222,33 @@ int main() {
             acc += tick.deltaTime;
             if (acc > .1) {
                 acc = 0;
-                particles.push_back({vec3(0.f), vec2(0.f), 0.f});
 
-                SmokeParticle p;
-                p.velocity = vec2(random() * 2.f - 1.f, random()) / vec2(3, -1);
-                p.life = random() + 1.f;
+                ParticleMesh<SmokeParticle>::Instance instance{};
+                instance.pos = vec3(0.f);
+                instance.scale = vec2(1.f);
+                instance.rotation = 0.f;
 
-                particleInfo.push_back(p);
+                SmokeParticle particle;
+                particle.velocity = vec2(random() * 2.f - 1.f, random()) / vec2(3, -1);
+                particle.life = random() + 1.f;
+
+                particleMesh->add(instance, particle);
             }
 
-            for (int i = 0; i < particles.size(); i++) {
-                ModelMatrixVertex& v = particles[i];
-                v.position += vec3(particleInfo[i].velocity * tick.deltaTime, 0.f);
-                v.scale = lerp(v.scale, vec2(1.f), tick.deltaTime);
-                v.color = lerp(v.color, vec4(1, 1, 1, .4), tick.deltaTime); 
+            particleMesh->update([&](u32 index, ParticleMesh<SmokeParticle>::Instance& instance, SmokeParticle& particle) {
+                instance.pos += vec3(particle.velocity * tick.deltaTime, 0.f);
+                instance.scale = lerp(instance.scale, vec2(1.f), tick.deltaTime);
+                instance.color = lerp(instance.color, vec4(1, 1, 1, .4), tick.deltaTime); 
 
-                particleInfo[i].life -= tick.deltaTime;
+                particle.life -= tick.deltaTime;
 
-                if (particleInfo[i].life < 0) {
-                    particles.at(i) = particles.back();
-                    particles.pop_back();
-
-                    particleInfo.at(i) = particleInfo.back();
-                    particleInfo.pop_back();
-
-                    i--;
+                if (particle.life < 0) {
+                    particleMesh->remove(index);
                 }
-            }
+            });
 
-            if (particleInfo.size() > 0) {
-                instanceBuffer->setData(0, sizeof(ModelMatrixVertex) * particles.size(), particles.data());
-            }
+            particleMesh->commit();
+            particleMesh->sendToDevice();
 
             camUBO->setData(&ubo);
             descriptor->write(frame.frameIndex, 1, camUBO);
@@ -240,7 +261,7 @@ int main() {
             cmd.pushConstant(shader, 0, &model);
             cmd.bindDescriptorSet(shader, descriptor->getSet(0));
 
-            cmd.drawInstanced(particleInfo.size(), indexBuffer, {vertexBuffer, instanceBuffer});
+            particleMesh->draw(cmd);
 
             vkCmdEndRenderPass(cmd.m_commandBuffer);
             vkEndCommandBuffer(cmd.m_commandBuffer);
@@ -251,13 +272,11 @@ int main() {
 
     device->waitUntilIdle();
 
+    delete particleMesh;
     delete descriptor;
     delete camUBO;
     delete image;
     delete imageSampler;
-    delete indexBuffer;
-    delete vertexBuffer;
-    delete instanceBuffer;
     delete shader;
     delete loop;
     delete device;

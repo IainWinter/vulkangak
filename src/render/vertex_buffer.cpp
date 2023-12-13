@@ -8,7 +8,9 @@ VertexBuffer::VertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, siz
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
     , m_vertexCount (vertexCount)
 {
-    setData(data);
+    if (data) {
+        setData(data);
+    }
 }
 
 VertexBuffer::~VertexBuffer() {
