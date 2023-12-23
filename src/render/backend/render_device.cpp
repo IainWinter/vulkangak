@@ -155,6 +155,7 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     // on apple we need to add this extension
     #ifdef __APPLE__
         instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+        instanceExtensions.push_back("VK_KHR_get_physical_device_properties2");
         instInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     #endif
 
@@ -180,9 +181,7 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     // Create the debug messenger
 
     if (m_useDebug) {
-        VkDebugUtilsMessengerEXT debugMessenger;
         VkDebugUtilsMessengerCreateInfoEXT debugCallbackInfo = vulkanGetDebugMessengerCreateInfo();
-
         vk(vulkanCreateDebugUtilsMessengerEXT(m_instance, &debugCallbackInfo, nullptr, &m_debugMessenger));
     }
 
@@ -202,14 +201,21 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     // For this application, only a single card that supports drawing to the screen is needed
 
     std::vector<const char*> physicalDeviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+
+        // VUID-VkDeviceCreateInfo-pProperties-04451
+        "VK_KHR_portability_subset", // "VK_KHR_get_physical_device_properties" is required in instanceExtensions
     };
 
     for (const VkPhysicalDevice& device : devices) {
         // check props
         VkPhysicalDeviceProperties props;
         vkGetPhysicalDeviceProperties(device, &props);
-        if (props.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+
+        // this only matters if there are more than 1 gpu
+        if (   deviceCount > 1 
+            && props.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) 
+        {
             continue;
         }
 
@@ -231,6 +237,10 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
         vk(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
         std::vector<VkExtensionProperties> availableExtensions(extensionCount);
         vk(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()));
+
+        for (VkExtensionProperties p : availableExtensions) {
+            printf("%s\n", p.extensionName);
+        }
 
         bool hasAllExtensions = true;
 

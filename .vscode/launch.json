@@ -21,13 +21,41 @@
             "request": "launch",
             "program": "${workspaceFolder}/asset_compiler/build/lithAssetCompiler.exe",
             "args": [
-                "C:/dev/vkTestCpp/assets.input",
-                "C:/dev/vkTestCpp/assets.bin",
+                "${workspaceFolder}/assets.input",
+                "${workspaceFolder}/build/assets.bin",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "externalTerminal"
-        }
+        },
+
+        {
+            "name": "Launch UNIX",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/vkTestCpp",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "Launch Assets UNIX",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/asset_compiler/build/lithAssetCompiler",
+            "args": [
+                "${workspaceFolder}/assets.input",
+                "${workspaceFolder}/build/assets.bin",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
     ]
 }

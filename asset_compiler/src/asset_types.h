@@ -53,7 +53,7 @@ struct FontAsset {
 	float topHeight;
 	float bottomHeight;
 
-	const Glyph& getGlyph(int character) const {
+	Glyph getGlyph(int character) const {
 		for (const auto& glyph : glyphs) {
 			if (glyph.character == character) {
 				return glyph;

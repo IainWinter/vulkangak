@@ -35,7 +35,7 @@ int FontGeometry::loadGlyphset(msdfgen::FontHandle *font, double fontScale, cons
     for (unicode_t index : glyphset) {
         GlyphGeometry glyph;
         if (glyph.load(font, geometryScale, msdfgen::GlyphIndex(index), preprocessGeometry)) {
-            addGlyph((GlyphGeometry &&) glyph);
+            addGlyph(std::forward<GlyphGeometry>(glyph));
             ++loaded;
         }
     }
@@ -53,7 +53,7 @@ int FontGeometry::loadCharset(msdfgen::FontHandle *font, double fontScale, const
     for (unicode_t cp : charset) {
         GlyphGeometry glyph;
         if (glyph.load(font, geometryScale, cp, preprocessGeometry)) {
-            addGlyph((GlyphGeometry &&) glyph);
+            addGlyph(std::forward<GlyphGeometry>(glyph));
             ++loaded;
         }
     }
@@ -95,7 +95,7 @@ bool FontGeometry::addGlyph(GlyphGeometry &&glyph) {
     glyphsByIndex.insert(std::make_pair(glyph.getIndex(), rangeEnd));
     if (glyph.getCodepoint())
         glyphsByCodepoint.insert(std::make_pair(glyph.getCodepoint(), rangeEnd));
-    glyphs->push_back((GlyphGeometry &&) glyph);
+    glyphs->push_back(std::forward<GlyphGeometry>(glyph));
     ++rangeEnd;
     return true;
 }

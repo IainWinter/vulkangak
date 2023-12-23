@@ -26,7 +26,7 @@ struct SmokeParticle {
 };
 
 int main() {
-    AssetPackage package = loadPackage("C:/dev/vkTestCpp/assets.bin");
+    AssetPackage package = loadPackage("./assets.bin");
 
     SimulationLoop* loop = new SimulationLoop();
     Window* window = new Window("VkTest", 500, 500);
@@ -104,8 +104,8 @@ int main() {
                 instance.rotation = 0.f;
 
                 SmokeParticle particle;
-                particle.velocity = vec2(random() * 2.f - 1.f, random()) / vec2(3, -1);
-                particle.life = random() + 1.f;
+                particle.velocity = vec2(random_f() * 2.f - 1.f, random_f()) / vec2(3, -1);
+                particle.life = random_f() + 1.f;
 
                 particleMesh->add(instance, particle);
             }

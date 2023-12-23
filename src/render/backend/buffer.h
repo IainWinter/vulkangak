@@ -22,11 +22,11 @@ public:
 
     void unmap();
 
+protected:
+    VkDevice m_device;
+
 public:
     VkBuffer m_buffer;
     VkDeviceMemory m_memory;
     size_t m_size;
-
-protected:
-    VkDevice m_device;
 };

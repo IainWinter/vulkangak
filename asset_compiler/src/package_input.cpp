@@ -1,6 +1,14 @@
 #include "package_input.h"
 #include <fstream>
 #include <stdexcept>
+#include <unordered_map>
+
+static const std::unordered_map<std::string, AssetType> s_assetTypes = {
+    { "image", ASSET_IMAGE },
+    { "vert", ASSET_SHADER_BYTECODE },
+    { "frag", ASSET_SHADER_BYTECODE },
+    { "font", ASSET_FONT },
+};
 
 std::vector<AssetInput> loadAssetInputs(const std::string& filepath) {
     std::vector<AssetInput> inputs;
@@ -19,20 +27,15 @@ std::vector<AssetInput> loadAssetInputs(const std::string& filepath) {
 
         std::string type = assetName.substr(assetName.find_last_of('.') + 1);
 
+        auto itr = s_assetTypes.find(type);
+        if (itr == s_assetTypes.end()) {
+            throw std::runtime_error("Unknown asset type");
+        }
+
         AssetInput input;
         input.assetNameInPackage = assetName;
         input.inputFile = inputAssetPath;
-
-        if (type == "image") {
-            input.type = ASSET_IMAGE;
-        } else if (type == "vert" || type == "frag") {
-            input.type = ASSET_SHADER_BYTECODE;
-        } else if (type == "font") {
-            input.type = ASSET_FONT;
-        }
-        else {
-            throw std::runtime_error("Unknown asset type");
-        }
+        input.type = itr->second;
 
         inputs.push_back(input);
     }

@@ -1,0 +1,11 @@
+test.image
+./src_assets/smoke2_8.png
+
+test.vert
+./build/shaders/vert.spv
+
+test.frag
+./build/shaders/frag.spv
+
+test.font
+./src_assets/fonts/SYMBOL.TTF

@@ -6,7 +6,7 @@
 
 #include "msdf-atlas-gen.h"
 
-Asset loadFont(AssetPackage* package, const std::string& path, const std::string& filepath, float scale) {
+void loadFont(AssetPackage* package, const std::string& path, const std::string& filepath, float scale) {
     FontAsset output;
 	
 	//
@@ -31,14 +31,14 @@ Asset loadFont(AssetPackage* package, const std::string& path, const std::string
 	msdfgen::FreetypeHandle* ft = msdfgen::initializeFreetype();
 	if (!ft) {
 		//print("Failed to initialize freetype");
-		return {};
+		return;
 	}
 
 	msdfgen::FontHandle* font = msdfgen::loadFont(ft, filepath.c_str());
 	if (!font) {
 		//print("Failed to load font {}", filepath);
 		msdfgen::deinitializeFreetype(ft);
-		return {};
+		return;
 	}
 
 	std::vector<msdf_atlas::GlyphGeometry> glyphs;
@@ -47,8 +47,8 @@ Asset loadFont(AssetPackage* package, const std::string& path, const std::string
 	fontGeometry.loadCharset(font, 1.0, *msdf_atlas::Charset::ASCII);
 
 	if (expensiveColoring) {
-		uint64_t coloringSeed = 0;
-		auto work = [=, &glyphs = glyphs, &coloringSeed, &edgeColoringFunction](int i, int threadNo) -> bool {
+		uint64_t coloringSeed = 0; // what does this do?
+		auto work = [=, &glyphs = glyphs](int i, int threadNo) -> bool {
 			uint64_t glyphSeed = (logMultiplier * (coloringSeed ^ i) + logIncrement) * !!coloringSeed;
 			glyphs[i].edgeColoring(edgeColoringFunction, angleThreshold, glyphSeed);
 			return true;

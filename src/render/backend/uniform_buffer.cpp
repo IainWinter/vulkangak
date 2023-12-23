@@ -1,5 +1,7 @@
 #include "uniform_buffer.h"
 
+#include <string.h>
+
 UniformBuffer::UniformBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t size) 
     : Buffer (device, 
               physicalDevice, 

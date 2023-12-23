@@ -3,7 +3,11 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}",
+                "${workspaceFolder}/src",
+                "/usr/local/Cellar/sdl2/2.26.3/include/SDL2",
+                "/opt/homebrew/Cellar/glm/0.9.9.8/include",
+                "${workspaceFolder}/asset_compiler"
             ],
             "defines": [
                 "_DEBUG",

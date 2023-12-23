@@ -4,8 +4,6 @@
 #include <sstream>
 
 Asset createImageAsset(const std::string& path, const ImageAsset& image) {
-    size_t size = image.width * image.height * image.channels;
-
     Asset asset;
     asset.path = path;
     asset.binary = image.pixels;
@@ -46,7 +44,7 @@ ShaderByteCodeAsset parseShaderByteCodeAsset(const Asset& asset) {
 }
 
 Asset createFontAsset(const std::string& path, const FontAsset& font) {
-    size_t size = sizeof(FontAsset::Glyph) * font.glyphs.size();
+    size_t size = sizeof(FontAsset::Glyph) * font.glyphs.size()
                 + sizeof(FontAsset::Kerning) * font.kerning.size();
 
     StructuredBinary binary(size);

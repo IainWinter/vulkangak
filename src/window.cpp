@@ -23,7 +23,7 @@ void Window::waitViewable() {
 
     do {
         int w, h;
-        SDL_GetWindowSizeInPixels(m_sdlWindow, &w, &h);
+        SDL_GetWindowSize(m_sdlWindow, &w, &h);
         u32 flags = SDL_GetWindowFlags(m_sdlWindow);
         pause = w < 10 || h < 10 || (flags & SDL_WINDOW_MINIMIZED); // under 10 for odd resize values, should be 0
     }

@@ -141,8 +141,13 @@ inline void readPackage(std::istream& in, AssetPackage* package) {
 }
 
 inline AssetPackage loadPackage(const std::string& filepath) {
-    AssetPackage package;
     std::ifstream file(filepath, std::ios::binary);
+    if (!file.is_open()) {
+        printf("Failed to load asset package, file not found: %s", filepath.c_str());
+        return {};
+    }
+    
+    AssetPackage package;
     readPackage(file, &package);
     return package;
 }

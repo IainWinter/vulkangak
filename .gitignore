@@ -1,7 +1,8 @@
 build
-assets.input
 shaders/bin
 
 /subprojects/*
 !/subprojects/glm.wrap
 !/subprojects/sdl2.wrap
+
+.DS_Store

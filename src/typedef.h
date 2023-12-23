@@ -12,7 +12,7 @@ using u64 = uint64_t;
 #include "glm/vec4.hpp"
 using namespace glm;
 
-inline float random() {
+inline float random_f() {
     return rand() / (float)RAND_MAX;
 }
 

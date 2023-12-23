@@ -1,4 +1,4 @@
-project('lithAssetCompiler', 'cpp')
+project('lithAssetCompiler', 'cpp', default_options: ['cpp_std=c++17'])
 
 subdir('subprojects_src/msdf-atlas-gen')
 

@@ -2,6 +2,7 @@
 #include "vk_error.h"
 
 #include <stdexcept>
+#include <string.h>
 
 u32 vulkanFindMemoryType(VkPhysicalDevice physicalDevice, u32 typeFilter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memProperties;
