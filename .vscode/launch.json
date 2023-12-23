@@ -25,7 +25,7 @@
                 "C:/dev/vkTestCpp/assets.bin",
             ],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "externalTerminal"
         }

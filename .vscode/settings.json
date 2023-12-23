@@ -75,7 +75,10 @@
         "fstream": "cpp",
         "set": "cpp",
         "coroutine": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "deque": "cpp",
+        "queue": "cpp",
+        "ranges": "cpp"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

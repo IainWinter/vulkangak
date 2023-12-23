@@ -24,10 +24,13 @@ std::vector<AssetInput> loadAssetInputs(const std::string& filepath) {
         input.inputFile = inputAssetPath;
 
         if (type == "image") {
-            input.type = ASSET_INPUT;
+            input.type = ASSET_IMAGE;
         } else if (type == "vert" || type == "frag") {
             input.type = ASSET_SHADER_BYTECODE;
-        } else {
+        } else if (type == "font") {
+            input.type = ASSET_FONT;
+        }
+        else {
             throw std::runtime_error("Unknown asset type");
         }
 

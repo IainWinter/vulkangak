@@ -41,10 +41,18 @@ struct Asset {
     float getFloat(const std::string& key) const {
         return std::stof(operator[](key));
     }
+
+    std::string getString(const std::string& key) const {
+        return operator[](key);
+    }
 };
 
 struct AssetPackage {
     std::vector<Asset> assets;
+
+    void add(const Asset& asset) {
+        assets.push_back(asset);
+    }
 
     const Asset& operator[](const std::string& path) const {
         for (const Asset& asset : assets) {

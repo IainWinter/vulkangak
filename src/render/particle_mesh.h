@@ -2,6 +2,10 @@
 
 #include "backend/render_device.h"
 
+#include <functional>
+
+// This really doesn't need to be a template
+
 template<typename _t>
 class ParticleMesh {
 public:
@@ -27,6 +31,9 @@ public:
         delete indexBuffer;
         delete instanceBuffer;
     }
+
+    ParticleMesh(const ParticleMesh&) = delete;
+    ParticleMesh& operator=(const ParticleMesh&) = delete;
 
     void sendToDevice() {
         // If there is no data, skip

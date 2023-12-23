@@ -14,8 +14,9 @@
 // <input file>
 
 enum AssetType {
-    ASSET_INPUT,
-    ASSET_SHADER_BYTECODE
+    ASSET_IMAGE,
+    ASSET_FONT,
+    ASSET_SHADER_BYTECODE,
 };
 
 struct AssetInput {
