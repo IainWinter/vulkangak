@@ -1,5 +1,7 @@
 #include "image.h"
 
+#include "asset/image.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -33,5 +35,5 @@ void loadImage(AssetPackage* package, const std::string& path, const std::string
     image.channels = channels;
     image.hasFlippedY = true;
 
-    package->add(createImageAsset(path, image));
+    package->add(image.createAsset(path));
 }

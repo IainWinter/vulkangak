@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/render_device.h"
+#include "render/backend/render_device.h"
 
 #include <functional>
 
@@ -20,7 +20,9 @@ public:
         vec4 color;
     };
 
-    ParticleMesh(RenderDevice* device, size_t batchSize) {
+    ParticleMesh(RenderDevice* device, size_t batchSize) 
+        : batchSize (batchSize)
+    {
         quadBuffer = device->newVertexBuffer<Vertex>(vertices);
         indexBuffer = device->newIndexBuffer(indices);
         instanceBuffer = device->newVertexBuffer(sizeof(Instance), batchSize, nullptr);
@@ -54,6 +56,15 @@ public:
     }
 
     void add(const Instance& instance, const _t& data) {
+        // skip if the count is over the max size
+        size_t currentCount = instances.size() 
+                            + 1 + addList.size()
+                            - removeList.size();
+
+        if (currentCount >= batchSize) {
+            return;
+        }
+
         addList.push_back({ instance, data });
     }
 
@@ -62,19 +73,17 @@ public:
     }
 
     void commit() {
-        for (const u32& i : removeList) {
-            instances.at(i) = instances.back();
+        // need to iterate in reverse
+        for (auto itr = removeList.rbegin(); itr != removeList.rend(); ++itr) {
+            if (*itr != instances.size()) { // both lists have the same size
+                instances.at(*itr) = instances.back();
+                particleCPUData.at(*itr) = particleCPUData.back();
+            }
+            
             instances.pop_back();
-
-            particleCPUData.at(i) = particleCPUData.back();
             particleCPUData.pop_back();
         }
         removeList.clear();
-
-        // should create more instance buffers
-        if (instances.size() + addList.size() > 100) {
-            return;
-        }
 
         for (const std::pair<Instance, _t>& p : addList) {
             instances.push_back(p.first);
@@ -104,6 +113,8 @@ private:
         0, 2, 1,
         1, 2, 3
     };
+
+    const int batchSize;
 
     VertexBuffer* quadBuffer;
     IndexBuffer*  indexBuffer;

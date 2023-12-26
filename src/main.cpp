@@ -2,7 +2,8 @@
 #include "vulkan/vulkan.hpp"
 
 #include "simulation_loop.h"
-#include "asset_compiler/package.h"
+#include "asset/package.h"
+#include "asset/image.h"
 
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -13,7 +14,9 @@
 #include <unordered_map>
 #include <functional>
 
-#include "render/particle_mesh.h"
+#include "render/particle/particle_mesh.h"
+
+#include "math/random.h"
 
 struct CameraUBO {
     mat4 view;
@@ -22,14 +25,21 @@ struct CameraUBO {
 
 struct SmokeParticle {
     vec2 velocity;
-    float life;
+    float damping;
+
+    float avelocity;
+    float adamping;
+
+    float lifeTotal;
+    float lifeCurrent;
+    float lifeRatio;
 };
 
 int main() {
     AssetPackage package = loadPackage("./assets.bin");
 
     SimulationLoop* loop = new SimulationLoop();
-    Window* window = new Window("VkTest", 500, 500);
+    Window* window = new Window("VkTest", 1280, 720);
     RenderDevice* device = new RenderDevice(window, true);
     
     // each AssetPackage will have a list of all the sets needed for the shaders contained in it
@@ -67,12 +77,16 @@ int main() {
     Shader* shader = device->newShader(shaderSource);
     UniformBuffer* camUBO = device->newUniformBuffer<CameraUBO>();
 
-    ParticleMesh<SmokeParticle>* particleMesh = new ParticleMesh<SmokeParticle>(device, 100);
+    ParticleMesh<SmokeParticle>* particleMesh = new ParticleMesh<SmokeParticle>(device, 500);
 
     // Create the image
 
-    Asset img = package["test.image"];
-    Image* image = device->newImage((u8*)img.binary.data(), img.getInt("width"), img.getInt("height"), img.getInt("channels"));
+    //ImageAsset img = parseImageAsset(package["test.image"]);
+    //Image* image = device->newImage(img);
+    //Asset img = package["test.image"];
+
+    ImageAsset img = package["test.image"];
+    Image* image = device->newImage((u8*)img.pixels.data(), img.width, img.height, img.channels);
     ImageSampler* imageSampler = device->newImageSampler();
 
     for (u32 i = 0; i < device->getFrameSyncInfo().framesInFlight(); i++) {
@@ -95,31 +109,35 @@ int main() {
             ubo.proj = glm::ortho(-width/2, width/2, -1.f, 1.f, -1.f, 1.f);
             
             acc += tick.deltaTime;
-            if (acc > .1) {
-                acc = 0;
+            while (acc > .005f) {
+                acc -= .005f;
 
                 ParticleMesh<SmokeParticle>::Instance instance{};
-                instance.pos = vec3(0.f);
-                instance.scale = vec2(1.f);
-                instance.rotation = 0.f;
+                instance.color = vec4(1.f);
+                instance.pos = vec3(-1.5f, 0.f, 0.f);
 
-                SmokeParticle particle;
-                particle.velocity = vec2(random_f() * 2.f - 1.f, random_f()) / vec2(3, -1);
-                particle.life = random_f() + 1.f;
+                SmokeParticle particle{};
+                particle.velocity = random_vec2_min_max(10, -8, 15, 8);
+                particle.damping = random_float_min_add(3, 1);
+                particle.lifeTotal = random_float_min_add(1, 1);
+                particle.avelocity = random_float_centered_extent(5);
 
                 particleMesh->add(instance, particle);
             }
 
             particleMesh->update([&](u32 index, ParticleMesh<SmokeParticle>::Instance& instance, SmokeParticle& particle) {
-                instance.pos += vec3(particle.velocity * tick.deltaTime, 0.f);
-                instance.scale = lerp(instance.scale, vec2(1.f), tick.deltaTime);
-                instance.color = lerp(instance.color, vec4(1, 1, 1, .4), tick.deltaTime); 
+                particle.lifeCurrent += tick.deltaTime;
+                particle.lifeRatio = particle.lifeCurrent / particle.lifeTotal;
 
-                particle.life -= tick.deltaTime;
-
-                if (particle.life < 0) {
+                if (particle.lifeRatio >= 1.f) {
                     particleMesh->remove(index);
                 }
+
+                instance.pos += vec3(particle.velocity * tick.deltaTime, 0.f);
+                particle.velocity *= damping(tick.deltaTime, particle.damping);
+
+                instance.scale   = lerp(vec2(.01f), vec2(.4f), particle.lifeRatio);
+                instance.color.a = lerp(0.4f, 0.f, particle.lifeRatio);
             });
 
             particleMesh->commit();

@@ -1,5 +1,7 @@
 #include "shader_bytecode.h"
 
+#include "asset/shader_bytecode.h"
+
 void loadShaderByteCode(AssetPackage* package, const std::string& path, const std::string& filepath) {
     std::ifstream file(filepath, std::ios::binary);
     if (!file.is_open()) {
@@ -11,9 +13,9 @@ void loadShaderByteCode(AssetPackage* package, const std::string& path, const st
     size = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    ShaderByteCodeAsset shader;
+    ShaderBytecodeAsset shader;
     shader.bytes.resize(size);
     file.read((char*)shader.bytes.data(), size);
 
-    package->add(createShaderByteCodeAsset(path, shader));
+    package->add(shader.createAsset(path));
 }

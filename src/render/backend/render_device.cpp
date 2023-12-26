@@ -238,10 +238,6 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
         std::vector<VkExtensionProperties> availableExtensions(extensionCount);
         vk(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()));
 
-        for (VkExtensionProperties p : availableExtensions) {
-            printf("%s\n", p.extensionName);
-        }
-
         bool hasAllExtensions = true;
 
         for (const char* ext : physicalDeviceExtensions) {

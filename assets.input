@@ -1,5 +1,5 @@
 test.image
-./src_assets/smoke2_8.png
+./src_assets/white.png
 
 test.vert
 ./build/shaders/vert.spv
@@ -8,4 +8,4 @@ test.frag
 ./build/shaders/frag.spv
 
 test.font
-./src_assets/fonts/SYMBOL.TTF
+./src_assets/fonts/Arial.ttf

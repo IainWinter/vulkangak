@@ -6,15 +6,13 @@ sources = [
     'src/main.cpp', 
     'src/package_input.cpp',
     
-    'src/asset_types.cpp',
-
     'src/load/font.cpp',
     'src/load/image.cpp',
     'src/load/shader_bytecode.cpp',
 ]
 
 include_dirs = [
-    '.',
+    'include',
     'src'
 ]
 

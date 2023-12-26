@@ -1,5 +1,8 @@
 #include "font.h"
 
+#include "asset/image.h"
+#include "asset/font.h"
+
 #include <unordered_map>
 #include <utility>
 #include <functional>
@@ -112,7 +115,7 @@ void loadFont(AssetPackage* package, const std::string& path, const std::string&
 		glyph.index = index;
 		glyph.character = code;
 
-		output.glyphs[code] = glyph;
+		output.glyphs.push_back(glyph);
 	}
 
 	for (const auto& kern : fontGeometry.getKerning()) {
@@ -145,6 +148,6 @@ void loadFont(AssetPackage* package, const std::string& path, const std::string&
 	atlas.channels = channelCount;
 	atlas.hasFlippedY = false;
 
-	package->add(createFontAsset(path, output));
-	package->add(createImageAsset(output.atlasPath, atlas));
+	package->add(output.createAsset(path));
+	package->add(atlas.createAsset(output.atlasPath));
 }

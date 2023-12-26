@@ -5,6 +5,8 @@ sources = [
     'src/main.cpp',
     'src/simulation_loop.cpp',
 
+    'src/math/random.cpp',
+
     'src/render/backend/render_device.cpp',
     'src/render/backend/descriptor_group.cpp',
     'src/render/backend/command_buffer.cpp',
@@ -17,7 +19,8 @@ sources = [
 ]
 
 include_dirs = [
-    'src'
+    'src',
+    'asset_compiler/include'
 ]
 
 deps = [
