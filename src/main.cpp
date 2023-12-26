@@ -117,8 +117,8 @@ int main() {
                 instance.pos = vec3(-1.5f, 0.f, 0.f);
 
                 SmokeParticle particle{};
-                particle.velocity = random_vec2_min_max(10, -8, 15, 8);
-                particle.damping = random_float_min_add(3, 1);
+                particle.velocity = random_vec2_min_max(3, -4, 10, 4);
+                particle.damping = random_float_min_add(3, 3);
                 particle.lifeTotal = random_float_min_add(1, 1);
                 particle.avelocity = random_float_centered_extent(5);
 
