@@ -1,7 +1,7 @@
 #include "random.h"
 
-// using rand for now
 #include <stdlib.h>
+#include <cmath>
 
 void random_set_seed(u32 seed) {
     srand(seed);

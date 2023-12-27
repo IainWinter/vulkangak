@@ -4,5 +4,6 @@ shaders/bin
 /subprojects/*
 !/subprojects/glm.wrap
 !/subprojects/sdl2.wrap
+!/subprojects/imgui.wrap
 
 .DS_Store

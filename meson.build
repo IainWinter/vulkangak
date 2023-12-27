@@ -1,10 +1,12 @@
 project('vkTestCpp', 'cpp', default_options: ['cpp_std=c++17'])
 
 sources = [
-    'src/window.cpp',
     'src/main.cpp',
+
+    'src/window.cpp',
     'src/simulation_loop.cpp',
 
+    'src/math/math.cpp',
     'src/math/random.cpp',
 
     'src/render/backend/render_device.cpp',
@@ -16,6 +18,7 @@ sources = [
     'src/render/backend/vertex_buffer.cpp',
     'src/render/backend/index_buffer.cpp',
     'src/render/backend/uniform_buffer.cpp',
+    'src/render/backend/imgui_loop.cpp'
 ]
 
 include_dirs = [
@@ -26,7 +29,8 @@ include_dirs = [
 deps = [
 	dependency('glm'),
 	dependency('sdl2', default_options: { 'test': false }),
-	dependency('vulkan')
+	dependency('vulkan'),
+    dependency('imgui')
 ]
 
 args = ['-DSDL_MAIN_HANDLED=1']

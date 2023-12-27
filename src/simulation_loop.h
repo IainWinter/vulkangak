@@ -19,9 +19,12 @@ public:
 
     bool beginTick(SimulationTick* tick);
 
+    void shutdown();
+
 private:
     std::chrono::high_resolution_clock::time_point m_lastTime;
     std::chrono::high_resolution_clock::time_point m_startTime;
 
     float m_timeAccumulated;
+    bool m_running;
 };

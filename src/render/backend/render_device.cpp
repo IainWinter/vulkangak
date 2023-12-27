@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include "imgui.h"
+
 struct VulkanSwapChainAvailableConfigs {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
@@ -601,6 +603,28 @@ void RenderDevice::recreateSwapchain() {
 
 FrameSyncInfo RenderDevice::getFrameSyncInfo() {
     return FrameSyncInfo(&m_currentFrameIndex, &m_currentImageIndex, &m_framesInFlight);
+}
+
+ImGuiLoop* RenderDevice::newImGuiLoop() {
+    // should track this to make sure that you can only create this one time
+    // lil hacky code
+    static bool once = false;
+    if (once == true) {
+        throw std::runtime_error("Can only create one ImGuiLoop");
+    }
+    once = true;
+
+    return new ImGuiLoop(
+        m_window,
+        m_instance,
+        m_physicalDevice,
+        m_logicalDevice,
+        m_renderPass,
+        m_commandPool,
+        m_graphicsQueue,
+        m_graphicsQueueIndex,
+        m_minImageCount
+    );
 }
 
 DescriptorGroup* RenderDevice::newDescriptorGroup(const std::vector<DescriptorBinding>& descriptors) {

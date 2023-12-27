@@ -8,6 +8,7 @@
 #include "image.h"
 #include "uniform_buffer.h"
 #include "descriptor_group.h"
+#include "imgui_loop.h"
 
 #include <vector>
 
@@ -42,6 +43,8 @@ public:
     RenderDevice& operator=(const RenderDevice&) = delete;
 
     FrameSyncInfo getFrameSyncInfo();
+
+    ImGuiLoop* newImGuiLoop();
 
     DescriptorGroup* newDescriptorGroup(const std::vector<DescriptorBinding>& descriptors);
 

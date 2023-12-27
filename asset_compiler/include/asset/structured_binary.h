@@ -40,16 +40,22 @@ public:
         bytes.insert(bytes.end(), str.begin(), str.end());
     }
 
+    void writeBinary(const std::vector<char>& binary) {
+        writeInt(binary.size());
+        bytes.insert(bytes.end(), binary.begin(), binary.end());
+    }
+
     const std::vector<char>& get() const {
         return bytes;
     }
 
     template<typename _t>
     StructuredBinary& operator<<(const _t& x) {
-             if constexpr (std::is_same_v<_t, float>)       writeFloat(x);
-        else if constexpr (std::is_same_v<_t, vec2>)        writeFloat2(x);
-        else if constexpr (std::is_same_v<_t, int>)         writeInt(x);
-        else if constexpr (std::is_same_v<_t, std::string>) writeString(x);
+             if constexpr (std::is_same_v<_t, float>)             writeFloat(x);
+        else if constexpr (std::is_same_v<_t, vec2>)              writeFloat2(x);
+        else if constexpr (std::is_same_v<_t, int>)               writeInt(x);
+        else if constexpr (std::is_same_v<_t, std::string>)       writeString(x);
+        else if constexpr (std::is_same_v<_t, std::vector<char>>) writeBinary(x);
 
         return *this;
     }
@@ -82,12 +88,22 @@ public:
         readIndex += size;
     }
 
+    void readBinary(std::vector<char>* binary) {
+        int size;
+        readInt(&size);
+
+        binary->resize(size);
+        std::copy(bytes.begin() + readIndex, bytes.begin() + readIndex + size, binary->begin());
+        readIndex += size;
+    }
+
     template<typename _t>
     StructuredBinary& operator>>(_t& x) {
-             if constexpr (std::is_same_v<_t, float>)       readFloat(&x);
-        else if constexpr (std::is_same_v<_t, vec2>)        readFloat2(&x);
-        else if constexpr (std::is_same_v<_t, int>)         readInt(&x);
-        else if constexpr (std::is_same_v<_t, std::string>) readString(&x);
+             if constexpr (std::is_same_v<_t, float>)             readFloat(&x);
+        else if constexpr (std::is_same_v<_t, vec2>)              readFloat2(&x);
+        else if constexpr (std::is_same_v<_t, int>)               readInt(&x);
+        else if constexpr (std::is_same_v<_t, std::string>)       readString(&x);
+        else if constexpr (std::is_same_v<_t, std::vector<char>>) readBinary(&x);
 
         return *this;
     }

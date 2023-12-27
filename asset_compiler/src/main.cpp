@@ -8,6 +8,7 @@
 #include "load/font.h"
 #include "load/image.h"
 #include "load/shader_bytecode.h"
+#include "load/shader_program.h"
 
 int main(int argc, const char** argv) {
     if (argc < 3) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "typedef.h"
+#include "math/math.h"
 
 void random_set_seed(u32 seed);
 
