@@ -169,6 +169,8 @@ int main() {
             {
                 if (ImGui::Begin("Test")) {
                     ImGui::Text("This is a string");
+                    static vec4 c;
+                    ImGui::ColorPicker4("Color", (float*)&c);
                 }
                 ImGui::End();
             }
