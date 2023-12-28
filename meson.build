@@ -1,4 +1,4 @@
-project('vkTestCpp', 'cpp', default_options: ['cpp_std=c++17'])
+project('vkTestCpp', 'cpp', default_options: ['cpp_std=c++20'])
 
 sources = [
     'src/main.cpp',

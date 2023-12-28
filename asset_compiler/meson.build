@@ -1,14 +1,17 @@
-project('lithAssetCompiler', 'cpp', default_options: ['cpp_std=c++17'])
+project('lithAssetCompiler', 'cpp', default_options: ['cpp_std=c++20'])
 
 subdir('subprojects_src/msdf-atlas-gen')
 
 sources = [
     'src/main.cpp', 
     'src/package_input.cpp',
+    'src/load_file.cpp',
     
     'src/load/font.cpp',
     'src/load/image.cpp',
     'src/load/shader_bytecode.cpp',
+    'src/load/shader_program.cpp',
+
 ]
 
 include_dirs = [

@@ -1,5 +1,5 @@
 #include "SDL.h"
-#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan.h"
 
 #include "simulation_loop.h"
 

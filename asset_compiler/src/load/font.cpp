@@ -51,7 +51,7 @@ void loadFont(AssetPackage* package, const std::string& path, const std::string&
 
 	if (expensiveColoring) {
 		uint64_t coloringSeed = 0; // what does this do?
-		auto work = [=, &glyphs = glyphs](int i, int threadNo) -> bool {
+		auto work = [edgeColoringFunction, &coloringSeed, &glyphs = glyphs](int i, int threadNo) -> bool {
 			uint64_t glyphSeed = (logMultiplier * (coloringSeed ^ i) + logIncrement) * !!coloringSeed;
 			glyphs[i].edgeColoring(edgeColoringFunction, angleThreshold, glyphSeed);
 			return true;

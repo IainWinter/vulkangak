@@ -31,7 +31,7 @@ vec4 random_vec4() {
     return vec4(random_float(), random_float(), random_float(), random_float());
 }
 
-bool random_bool_ratio_true(bool ratioTrue) {
+bool random_bool_ratio_true(float ratioTrue) {
     return random_float() < ratioTrue;
 }
 
@@ -183,8 +183,8 @@ vec4 random_vec4_centered_extent(float extentX, float extentY, float extentZ, fl
     return random_vec4_centered_extent(vec4(extentX, extentY, extentZ, extentW));
 }
 
-#define PI 3.14159265359
-#define PI2 6.28318530718
+#define PI 3.14159265359f
+#define PI2 6.28318530718f
 
 vec2 random_vec2_ring() {
     float angle = random_float_max(PI2);

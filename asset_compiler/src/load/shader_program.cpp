@@ -18,15 +18,15 @@ void loadShaderProgram(AssetPackage* package, const std::string& path, const std
 
     program.descriptors = {
         ShaderProgramAsset::Descriptor {
-            .type = ShaderProgramAsset::Descriptor::Type_UniformBuffer,
             .stages = ShaderProgramAsset::Stage_Vertex,
+            .type = ShaderProgramAsset::Descriptor::Type_UniformBuffer,
             .elementCount = 1,
             .location = 0,
             .set = 0
         },
         ShaderProgramAsset::Descriptor {
-            .type = ShaderProgramAsset::Descriptor::Type_Sampler,
             .stages = ShaderProgramAsset::Stage_Fragment,
+            .type = ShaderProgramAsset::Descriptor::Type_Sampler,
             .elementCount = 1,
             .location = 1,
             .set = 0

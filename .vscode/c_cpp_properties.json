@@ -5,23 +5,47 @@
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/src",
-                "/usr/local/Cellar/sdl2/2.26.3/include/SDL2",
-                "/opt/homebrew/Cellar/glm/0.9.9.8/include",
-                "${workspaceFolder}/asset_compiler",
                 "${workspaceFolder}/asset_compiler/include",
-                "${workspaceFolder}/asset_compiler/src",
+                "${workspaceFolder}/asset_compiler/subprojects_src/msdf-atlas-gen/msdf-atlas-gen",
+                "${workspaceFolder}/asset_compiler/subprojects_src/msdf-atlas-gen/msdfgen",
                 "${workspaceFolder}/subprojects/imgui-1.89.9",
-                "${workspaceFolder}/subprojects/imgui-1.89.9/backends"
+                "${workspaceFolder}/subprojects/imgui-1.89.9/backends",
+                "/usr/local/Cellar/sdl2/2.26.3/include/SDL2",
+                "/opt/homebrew/Cellar/glm/0.9.9.8/include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "MSDF_ATLAS_PUBLIC=",
+                "SDL_MAIN_HANDLED"
             ],
             "cStandard": "c17",
-            "cppStandard": "c++17",
+            "cppStandard": "c++20",
             "intelliSenseMode": "macos-clang-arm64",
             "compilerPath": "/usr/bin/gcc"
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/asset_compiler/src",
+                "${workspaceFolder}/asset_compiler/include",
+                "${workspaceFolder}/asset_compiler/subprojects_src/msdf-atlas-gen/msdf-atlas-gen",
+                "${workspaceFolder}/asset_compiler/subprojects_src/msdf-atlas-gen/msdfgen",
+                "${workspaceFolder}/subprojects/SDL2-2.28.1/include",
+                "${workspaceFolder}/subprojects/glm-0.9.9.8",
+                "${workspaceFolder}/subprojects/imgui-1.89.9",
+                "${workspaceFolder}/subprojects/imgui-1.89.9/backends",
+                "C:/sdk/VulkanSDK/1.3.268.0/Include"
+            ],
+            "defines": [
+                "MSDF_ATLAS_PUBLIC=",
+                "SDL_MAIN_HANDLED"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-msvc-x64"
         }
     ],
     "version": 4

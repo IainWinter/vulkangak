@@ -14,7 +14,7 @@ vec3  random_vec3 ();
 vec4  random_vec4 ();
 
 // Return true if a roll between (0, 1) is below ratioTrue
-bool random_bool_ratio_true(bool ratioTrue);
+bool random_bool_ratio_true(float ratioTrue);
 
 // Generate values between (0, max)
 s32   random_s32_max  (s32 max);

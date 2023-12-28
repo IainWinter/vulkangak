@@ -22,7 +22,9 @@ void Window::addEventListener(std::function<void(SDL_Event)> listener) {
 void Window::pumpEvents() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        sendEventToListeners(event);
+        for (auto& listener : listeners) {
+            listener(event);
+        }
     }
 }
 
@@ -37,15 +39,6 @@ void Window::waitViewable() {
         SDL_GetWindowSize(m_sdlWindow, &w, &h);
         u32 flags = SDL_GetWindowFlags(m_sdlWindow);
         pause = w < 10 || h < 10 || (flags & SDL_WINDOW_MINIMIZED); // under 10 for odd resize values, should be 0
-
-        // Not sure if this should happen or not...
-        sendEventToListeners(event);
     }
     while (pause && SDL_WaitEvent(&event));
-}
-
-void Window::sendEventToListeners(SDL_Event event) {
-    for (auto& listener : listeners) {
-        listener(event);
-    }
 }

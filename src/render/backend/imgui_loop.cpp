@@ -9,7 +9,6 @@
 
 #include <vector>
 
-
 ImGuiLoop::ImGuiLoop(
         Window* window,
         VkInstance instance,
@@ -101,8 +100,8 @@ void ImGuiLoop::submitFrame(VkCommandBuffer commandBuffer) {
 	ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
-#ifdef _WIN32
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-#endif
+// #ifdef _WIN32
+// 		ImGui::UpdatePlatformWindows();
+// 		ImGui::RenderPlatformWindowsDefault();
+// #endif
 }

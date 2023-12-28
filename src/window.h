@@ -24,9 +24,6 @@ public:
     // When the window is minimized it has a size of 0, 0
     void waitViewable();
 
-private:
-    void sendEventToListeners(SDL_Event event);
-
 public:
     SDL_Window* m_sdlWindow;
 

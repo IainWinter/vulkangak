@@ -37,10 +37,10 @@ struct FontAsset {
     FontAsset() = default;
 
 	FontAsset(const Asset& asset) {
-		spaceAdvance = asset.getInt("spaceAdvance");
-		lineHeight = asset.getInt("lineHeight");
-		topHeight = asset.getInt("topHeight");
-		bottomHeight = asset.getInt("bottomHeight");
+		spaceAdvance = asset.getFloat("spaceAdvance");
+		lineHeight = asset.getFloat("lineHeight");
+		topHeight = asset.getFloat("topHeight");
+		bottomHeight = asset.getFloat("bottomHeight");
 		atlasPath = asset.getString("atlas");
 
 		StructuredBinary binary(asset.binary);
