@@ -1,11 +1,17 @@
 test.image
 ./src_assets/white.png
 
-test.vert
-./build/shaders/vert.spv
+particle.vert
+./build/shaders/particle_vert.spv
 
-test.frag
-./build/shaders/frag.spv
+particle.frag
+./build/shaders/particle_frag.spv
+
+line.vert
+./build/shaders/line_vert.spv
+
+line.frag
+./build/shaders/line_frag.spv
 
 test.font
 ./src_assets/fonts/Arial.ttf

@@ -3,10 +3,10 @@
 
 #include <stdexcept>
 
-VertexLayoutBuilder& VertexLayoutBuilder::buffer(size_t size, bool instanced) {
+VertexLayoutBuilder& VertexLayoutBuilder::buffer(size_t stride, bool instanced) {
     VulkanVertexLayout buffer{};
     buffer.description.binding = (u32)buffers.size();
-    buffer.description.stride = size;
+    buffer.description.stride = stride;
     buffer.description.inputRate = instanced ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
 
     buffers.push_back(buffer);

@@ -3,6 +3,7 @@
 layout(binding = 1) uniform UniformBufferObject {
     mat4 view;
     mat4 proj;
+    mat4 viewProj;
 } cam;
 
 layout( push_constant ) uniform constants {
@@ -42,7 +43,7 @@ mat4 calcModel(vec3 pos, vec2 scale, float rotation) {
 void main() {
     mat4 transform = calcModel(inInstancePos, inInstanceScale, inInstanceRotation);
 
-    gl_Position = cam.proj * cam.view * PushConstants.model * transform * vec4(inPosition, 0.0, 1.0);
+    gl_Position = cam.viewProj * PushConstants.model * transform * vec4(inPosition, 0.0, 1.0);
     fragUV = inUV;
     fragColor = inInstanceColor;
 }

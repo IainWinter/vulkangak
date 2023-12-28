@@ -203,11 +203,14 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     // For this application, only a single card that supports drawing to the screen is needed
 
     std::vector<const char*> physicalDeviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-
-        // VUID-VkDeviceCreateInfo-pProperties-04451
-        "VK_KHR_portability_subset", // "VK_KHR_get_physical_device_properties" is required in instanceExtensions
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+
+    #ifdef __APPLE__
+        // VUID-VkDeviceCreateInfo-pProperties-04451
+        // "VK_KHR_get_physical_device_properties" is required in instanceExtensions
+        physicalDeviceExtensions.push_back("VK_KHR_portability_subset");
+    #endif
 
     for (const VkPhysicalDevice& device : devices) {
         // check props

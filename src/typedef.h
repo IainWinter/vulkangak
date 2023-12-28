@@ -11,3 +11,6 @@ using u64 = uint64_t;
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
 using namespace glm;
+
+#define PI 3.14159265359f
+#define PI2 6.28318530718f

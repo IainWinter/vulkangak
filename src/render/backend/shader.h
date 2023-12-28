@@ -25,7 +25,7 @@ struct VulkanShaderSource {
 
 class VertexLayoutBuilder {
 public:
-    VertexLayoutBuilder& buffer(size_t size, bool instanced);
+    VertexLayoutBuilder& buffer(size_t stride, bool instanced);
     VertexLayoutBuilder& attribute(u32 location, size_t offset, VkFormat format);
     std::vector<VulkanVertexLayout> build() const;
 

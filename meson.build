@@ -18,7 +18,9 @@ sources = [
     'src/render/backend/vertex_buffer.cpp',
     'src/render/backend/index_buffer.cpp',
     'src/render/backend/uniform_buffer.cpp',
-    'src/render/backend/imgui_loop.cpp'
+    'src/render/backend/imgui_loop.cpp',
+
+    'src/render/line/line_mesh.cpp'
 ]
 
 include_dirs = [
