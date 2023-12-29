@@ -78,7 +78,7 @@ Kerning:
     <right: int>
     <amount: float>
 
-<asset_path: string>
+<atlas_path: string>
 <glyphs: list<Glyph>>
 <kerning: list<Kerning>>
 <spaceAdvance: float>
