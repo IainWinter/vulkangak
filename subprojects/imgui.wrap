@@ -9,7 +9,7 @@ patch_hash = 9b21290c597d76bf8d4eeb3f9ffa024b11d9ea6c61e91d648ccc90b42843d584
 source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/imgui_1.89.9-1/imgui-1.89.9.tar.gz
 wrapdb_version = 1.89.9-1
 
-diff_files = imgui_srgb/imgui_srgb.patch
+diff_files = imgui/imgui_srgb.patch
 
 [provide]
 imgui = imgui_dep

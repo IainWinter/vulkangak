@@ -11,6 +11,9 @@ struct SimulationTick {
 
     // The time between ticks
     float deltaTime;
+
+    // The current simulation frame
+    int tick;
 };
 
 class SimulationLoop {
@@ -25,6 +28,7 @@ private:
     std::chrono::high_resolution_clock::time_point m_lastTime;
     std::chrono::high_resolution_clock::time_point m_startTime;
 
+    int m_tick;
     float m_timeAccumulated;
     bool m_running;
 };

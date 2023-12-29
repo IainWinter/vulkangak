@@ -27,6 +27,10 @@ public:
 public:
     SDL_Window* m_sdlWindow;
 
+    // These are updated by pumpEvents
+    float m_width;
+    float m_height;
+
 private:
     std::vector<SDLEventListener> listeners;
 };

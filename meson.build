@@ -5,6 +5,7 @@ sources = [
 
     'src/window.cpp',
     'src/simulation_loop.cpp',
+    'src/input.cpp',
 
     'src/math/math.cpp',
     'src/math/random.cpp',
@@ -20,7 +21,9 @@ sources = [
     'src/render/backend/uniform_buffer.cpp',
     'src/render/backend/imgui_loop.cpp',
 
-    'src/render/line/line_mesh.cpp'
+    'src/render/line/line_mesh.cpp',
+
+    'src/render/lens.cpp',
 ]
 
 include_dirs = [

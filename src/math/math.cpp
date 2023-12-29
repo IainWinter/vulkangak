@@ -1,5 +1,7 @@
 #include "math/math.h"
 
+#include "glm/geometric.hpp"
+
 float clamp(float x, float min, float max) {
     if (x < min) return min;
     if (x > max) return max;
@@ -24,4 +26,17 @@ vec3 lerp(const vec3& a, const vec3& b, float w) {
 
 vec4 lerp(const vec4& a, const vec4& b, float w) {
     return a * (1.f - w) + b * w;
+}
+
+vec2 clamp_length(vec2 v, float min, float max) {
+    float len = length(v);
+    if (len < min) return v * (min / len);
+    if (len > max) return v * (max / len);
+    return v;
+}
+
+vec2 normalize_safe(vec2 v) {
+    float len = length(v);
+    if (len == 0.f) return v;
+    return v / len;
 }

@@ -4,6 +4,7 @@
 SimulationLoop::SimulationLoop() {
     m_startTime = std::chrono::high_resolution_clock::now();
     m_lastTime = m_startTime;
+    m_tick = 0;
     m_timeAccumulated = 0.f;
     m_running = true;
 }
@@ -20,6 +21,9 @@ bool SimulationLoop::beginTick(SimulationTick* tick) {
     tick->applicationTime = appTime;
     tick->deltaTime = dt;
     tick->time = m_timeAccumulated;
+    tick->tick = m_tick;
+
+    m_tick += 1;
 
     return m_running;
 }

@@ -302,12 +302,7 @@ enum MouseInput
 	MOUSE_VEL_WHEEL_X,
 	MOUSE_VEL_WHEEL_Y,
 
-    // This is before the last 2 because they are not part of the linear rage of input codes
-	MOUSE_INPUT_COUNT,
-
-	// these are sent by the Window, EngineLoop handles breaking it into x,y/vx,vy
-	MOUSE_VEL_POS,
-	MOUSE_VEL_WHEEL,
+	MOUSE_INPUT_COUNT
 };
 
 enum ControllerInput
@@ -343,6 +338,7 @@ enum ControllerInput
 	AXIS_TRIGGERLEFT,
 	AXIS_TRIGGERRIGHT,
 
+    // Call GetInputCode(CONTROLLER_INPUT_COUNT) to get the max number of inputs
     CONTROLLER_INPUT_COUNT
 };
 
@@ -614,7 +610,7 @@ public:
     */
 
     void SetActiveFrame(int frame);
-    void SetState(int code, float state);
+    void SetState(InputCode code, float state);
     const std::unordered_set<InputName>& GetMapping(InputCode code);
     float GetRawState(InputCode code);
 

@@ -9,6 +9,9 @@ Window::Window(const char* title, int width, int height) {
         width, height, 
         SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN
     );
+
+    m_width = (float)width;
+    m_height = (float)height;
 }
 
 Window::~Window() {
@@ -21,7 +24,15 @@ void Window::addEventListener(std::function<void(SDL_Event)> listener) {
 
 void Window::pumpEvents() {
     SDL_Event event;
+
     while (SDL_PollEvent(&event)) {
+        if (   event.type == SDL_WINDOWEVENT 
+            && event.window.event == SDL_WINDOWEVENT_RESIZED) 
+        {
+            m_width = (float)event.window.data1;
+            m_height = (float)event.window.data2;
+        }
+
         for (auto& listener : listeners) {
             listener(event);
         }

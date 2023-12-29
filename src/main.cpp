@@ -1,11 +1,16 @@
-#include "SDL.h"
-#include "vulkan/vulkan.h"
-
 #include "simulation_loop.h"
+#include "imgui.h"
+#include "input.h"
 
 #include "asset/package.h"
 #include "asset/image.h"
 #include "asset/shader_program.h"
+
+#include "render/particle/particle_mesh.h"
+#include "render/line/line_mesh.h"
+#include "render/lens.h"
+
+#include "math/random.h"
 
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -15,15 +20,6 @@
 #include <chrono>
 #include <unordered_map>
 #include <functional>
-
-#include "render/particle/particle_mesh.h"
-#include "render/line/line_mesh.h"
-
-#include "render/backend/imgui_loop.h"
-
-#include "math/random.h"
-
-#include "imgui.h"
 
 struct CameraUBO {
     mat4 view;
@@ -118,9 +114,88 @@ int main() {
     RenderDevice* device = new RenderDevice(window, true);
     ImGuiLoop* imgui = device->newImGuiLoop();
 
+    InputMap* input = new InputMap();
+
+    CameraLens lens = CameraLens::Orthographic(4, 16.f/9.f, -1, 1);
+
+    input->CreateAxis("Mouse Position")
+        .Map(MOUSE_POS_X, vec2(1, 0))
+        .Map(MOUSE_POS_Y, vec2(0, 1));
+
     window->addEventListener([loop](SDL_Event event) {
         if (event.type == SDL_QUIT) {
             loop->shutdown();
+        }
+    });
+
+    window->addEventListener([window, input](SDL_Event event) {
+        switch (event.type) {
+            // Major issue with sdl2 is that the mouse is given by int
+
+            case SDL_MOUSEMOTION: {
+				float x = (float)event.motion.x / window->m_width;
+				float y = (float)event.motion.y / window->m_height;
+
+				float vel_x = (float) event.motion.xrel;
+				float vel_y = (float)-event.motion.yrel;
+
+                input->SetState(MOUSE_POS_X, x);
+                input->SetState(MOUSE_POS_Y, y);
+
+                input->SetState(MOUSE_VEL_X, vel_x);
+                input->SetState(MOUSE_VEL_Y, vel_y);
+
+				break;
+			}
+
+			case SDL_MOUSEBUTTONUP:
+			case SDL_MOUSEBUTTONDOWN: {
+				float x = (float)event.button.x / window->m_width;
+				float y = (float)event.button.y / window->m_height;
+
+                bool state = event.button.state == SDL_PRESSED;
+
+				MouseInput mouseInput;
+
+				switch (event.button.button) {
+					case SDL_BUTTON_LEFT:   mouseInput = MOUSE_LEFT; break;
+					case SDL_BUTTON_MIDDLE: mouseInput = MOUSE_MIDDLE; break;
+					case SDL_BUTTON_RIGHT:  mouseInput = MOUSE_RIGHT; break;
+					case SDL_BUTTON_X1:     mouseInput = MOUSE_X1; break;
+					case SDL_BUTTON_X2:     mouseInput = MOUSE_X2; break;
+					default: throw nullptr;
+				}
+                
+                input->SetState(mouseInput, state);
+
+                input->SetState(MOUSE_POS_X, x);
+                input->SetState(MOUSE_POS_Y, y);
+
+                input->SetState(MOUSE_VEL_X, 0);
+                input->SetState(MOUSE_VEL_Y, 0);
+
+				break;
+			}
+
+			case SDL_MOUSEWHEEL: {
+				float flip = event.wheel.direction == SDL_MOUSEWHEEL_NORMAL ? 1.f : -1.f;
+                float vx = event.wheel.preciseX * flip;
+                float vy = event.wheel.preciseY * flip;
+
+                input->SetState(MOUSE_VEL_WHEEL_X, vx);
+                input->SetState(MOUSE_VEL_WHEEL_X, vy);
+
+				break;
+			}
+
+			case SDL_KEYUP:
+			case SDL_KEYDOWN: {
+                KeyboardInput scancode = (KeyboardInput)event.key.keysym.scancode;
+                bool state = (bool)event.key.state;
+
+                input->SetState(scancode, state);
+				break;
+			}
         }
     });
 
@@ -160,12 +235,8 @@ int main() {
     VulkanShaderSource particleShaderSource;
     particleShaderSource.vertex = package["particle.vert"].binary;
     particleShaderSource.fragment = package["particle.frag"].binary;
-    particleShaderSource.pushConstants = {
-        { VK_SHADER_STAGE_VERTEX_BIT, sizeof(mat4) }
-    };
-    particleShaderSource.descriptorSetLayouts = {
-        descriptor->getLayout(0)
-    };
+    particleShaderSource.pushConstants = {{ VK_SHADER_STAGE_VERTEX_BIT, sizeof(mat4) }};
+    particleShaderSource.descriptorSetLayouts = {descriptor->getLayout(0)};
     particleShaderSource.vertexInputs = ParticleMesh<SmokeParticle>::getLayout();
 
     Shader* particleShader = device->newShader(particleShaderSource);
@@ -176,12 +247,8 @@ int main() {
     VulkanShaderSource lineShaderSource;
     lineShaderSource.vertex = package["line.vert"].binary;
     lineShaderSource.fragment = package["line.frag"].binary;
-    lineShaderSource.pushConstants = {
-        { VK_SHADER_STAGE_VERTEX_BIT, sizeof(LineShaderPushConstants) }
-    };
-    lineShaderSource.descriptorSetLayouts = {
-        descriptor->getLayout(0)
-    };
+    lineShaderSource.pushConstants = {{ VK_SHADER_STAGE_VERTEX_BIT, sizeof(LineShaderPushConstants) }};
+    lineShaderSource.descriptorSetLayouts = {descriptor->getLayout(0)};
     lineShaderSource.vertexInputs = LineMesh::getLayout();
 
     Shader* lineShader = device->newShader(lineShaderSource);
@@ -198,6 +265,7 @@ int main() {
     SimulationTick tick;
     while (loop->beginTick(&tick)) {
         window->pumpEvents();
+        input->UpdateStates(tick.deltaTime);
 
         mat4 model = mat4(1.0f);//rotate(mat4(1.0f), tick.applicationTime * radians(90.0f), vec3(0.0f, 0.0f, 1.0f));
         
@@ -235,30 +303,32 @@ int main() {
 
         // particleMesh->commit();
 
-        for (Arc* arc : arcs) {
-            arc->acc = -arc->pos;
+        for (int i = 1; i < arcs.size(); i++) {
+            Arc* arc = arcs[i];
 
-            for (Arc* arc2 : arcs) {
-                if (arc == arc2) {
-                    break;
-                }
+            vec2 dir = arcs[0]->pos - arc->pos;
+            float dist = length(dir);
 
-                //arc->acc += normalize(arc->pos - arc2->pos) * 10.f * tick.deltaTime;
-            }
-
+            arc->acc = dir / (dist * dist) * 10.f;
+            
             arc->update(tick.deltaTime);
         }
+
+        arcs[0]->pos = lens.ScreenToWorld2D(input->GetAxis("Mouse Position"));
+        arcs[0]->update(tick.deltaTime);
 
         VulkanFrameImage frame;
         if (device->waitBeginFrame(&frame)) {
             float aspect = frame.width / (float)frame.height;
             float width = 2 * aspect;
 
-            CameraUBO ubo{};
-            ubo.view = mat4(1.f);
-            ubo.proj = glm::ortho(-width/2, width/2, -1.f, 1.f, -1.f, 1.f);
-            ubo.viewProj = ubo.proj * ubo.view;
+            lens.aspect = window->m_width / window->m_height;
 
+            CameraUBO ubo{};
+            ubo.view = lens.GetViewMatrix();
+            ubo.proj = lens.GetProjectionMatrix();
+            ubo.viewProj = ubo.proj * ubo.view;
+            
             camUBO->setData(&ubo);
             descriptor->write(frame.frameIndex, 1, camUBO);
             
@@ -291,11 +361,16 @@ int main() {
             {
                 if (ImGui::Begin("Test")) {
                     ImGui::Text("This is a string");
+
+                    ImGui::Text("%f fps", 1.f / tick.deltaTime);
+
+                    ImGui::Text("Input map");
+                    ImGui::Text("Mouse pos: %f, %f", input->GetRawState(MOUSE_POS_X), input->GetRawState(MOUSE_POS_Y));
                 }
                 ImGui::End();
             }
             imgui->submitFrame(cmd.m_commandBuffer);
-            
+
             vkCmdEndRenderPass(cmd.m_commandBuffer);
             vkEndCommandBuffer(cmd.m_commandBuffer);
 
