@@ -1,6 +1,6 @@
-# lith project
+# vulkangak
 
-This project is a collection of tool for creating 2d games in c++. It contains an asset pipeline, input mapper, and rendering engine.
+testing
 
 ## Assets
 
