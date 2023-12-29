@@ -20,7 +20,7 @@ layout (location = 5) in vec4 inInstanceColor;
 layout(location = 0) out vec2 fragUV;
 layout(location = 1) out vec4 fragColor;
 
-mat4 calcModel(vec3 pos, vec2 scale, vec3 ang) {
+mat4 calcModel(vec3 pos, vec3 ang) {
     float cosX = cos(ang.x);
     float sinX = sin(ang.x);
     float cosY = cos(ang.y);
@@ -84,9 +84,9 @@ mat4 calcModel(vec3 pos, vec2 scale, vec3 ang) {
 }
 
 void main() {
-    mat4 transform = calcModel(inInstancePos, inInstanceScale, inInstanceRotation);
+    mat4 transform = calcModel(inInstancePos, inInstanceRotation);
 
-    gl_Position = cam.viewProj * PushConstants.model * transform * vec4(inPosition, 0.0, 1.0);
+    gl_Position = cam.viewProj * PushConstants.model * transform * vec4(inPosition * inInstanceScale, 0.0, 1.0);
     fragUV = inUV;
     fragColor = inInstanceColor;
 }

@@ -82,7 +82,7 @@ int main() {
     spawner.particle.lifetime = 1.8f;
 
     spawner.particle.enableScalingByLife = true;
-    spawner.particle.initialScale = vec2(0.125f);
+    spawner.particle.initialScale = vec2(0.125f*2);
     spawner.particle.finalScale = vec2(0);
     spawner.particle.factorScale = 4.056f;
     

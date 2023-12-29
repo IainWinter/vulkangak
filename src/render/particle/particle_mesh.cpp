@@ -81,7 +81,7 @@ void ParticleMesh::update(float deltaTime) {
         particle.aVelocity *= damping(particle.aDamping, deltaTime);
 
         if (particle.enableScalingByLife) {
-            float w = pow(ratio, particle.factorTint);
+            float w = pow(ratio, particle.factorScale);
             instance.scale = lerp(particle.initialScale, particle.finalScale, w);
         }
 

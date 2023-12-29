@@ -6,7 +6,6 @@ sources = [
     'src/window.cpp',
     'src/simulation_loop.cpp',
     'src/input.cpp',
-    'src/job.cpp',
 
     'src/math/math.cpp',
     'src/math/random.cpp',
