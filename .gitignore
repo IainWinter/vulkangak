@@ -8,3 +8,5 @@ shaders/bin
 !/subprojects/packagefiles
 
 .DS_Store
+
+.vscode/settings.json
