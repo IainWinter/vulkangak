@@ -2,12 +2,14 @@
 
 #include "typedef.h"
 #include "vulkan/vulkan.h"
+#include "vk_mem_alloc.h"
 
 #include "buffer.h"
 
 class Image {
 public:
-    Image(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue m_graphicsQueue, VkFormat format, const u8* pixels, u32 width, u32 height);
+    // should convert to using the allocator
+    Image(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue m_graphicsQueue, VkFormat format, const u8* pixels, u32 width, u32 height);
     ~Image();
 
     Image(const Image&) = delete;

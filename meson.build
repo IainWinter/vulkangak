@@ -22,6 +22,7 @@ sources = [
     'src/render/backend/imgui_loop.cpp',
 
     'src/render/line/line_mesh.cpp',
+    'src/render/particle/particle_mesh.cpp',
 
     'src/render/lens.cpp',
 ]
@@ -34,8 +35,9 @@ include_dirs = [
 deps = [
 	dependency('glm'),
 	dependency('sdl2', default_options: { 'test': false }),
+    dependency('imgui'),
 	dependency('vulkan'),
-    dependency('imgui')
+	dependency('vulkan-memory-allocator'),
 ]
 
 args = ['-DSDL_MAIN_HANDLED=1']

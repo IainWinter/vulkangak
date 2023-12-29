@@ -1,6 +1,7 @@
 #include "render_device.h"
-#include "SDL_vulkan.h"
+
 #include "vk_error.h"
+#include "SDL_vulkan.h"
 
 #include <vector>
 #include <stdexcept>
@@ -9,6 +10,9 @@
 #include <unordered_map>
 
 #include "imgui.h"
+
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
 
 struct VulkanSwapChainAvailableConfigs {
     VkSurfaceCapabilitiesKHR capabilities;
@@ -369,10 +373,17 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
 
         m_frames.push_back(frame);
     }
+
+    VmaAllocatorCreateInfo allocatorInfo{};
+    allocatorInfo.instance = m_instance;
+    allocatorInfo.physicalDevice = m_physicalDevice;
+    allocatorInfo.device = m_logicalDevice;
+
+    vk(vmaCreateAllocator(&allocatorInfo, &m_allocator));
 }
 
 RenderDevice::~RenderDevice() {
-    // destroyDescriptorSets();
+    vmaDestroyAllocator(m_allocator);
 
     for (const VulkanFrame& frame : m_frames) {
         vkDestroySemaphore(m_logicalDevice, frame.imageAvailableSemaphore, nullptr);
@@ -640,19 +651,19 @@ Shader* RenderDevice::newShader(const VulkanShaderSource& source) {
 }
 
 VertexBuffer* RenderDevice::newVertexBuffer(size_t vertexSize, size_t vertexCount, const void* data) {
-    return new VertexBuffer(m_logicalDevice, m_physicalDevice, vertexSize, vertexCount, data);
+    return new VertexBuffer(m_allocator, vertexSize, vertexCount, data);
 }
 
 IndexBuffer* RenderDevice::newIndexBuffer(const std::vector<u32>& indices) {
-    return new IndexBuffer(m_logicalDevice, m_physicalDevice, indices.size(), (const u8*)indices.data());
+    return new IndexBuffer(m_allocator, indices.size(), (const u8*)indices.data());
+}
+
+UniformBuffer* RenderDevice::newUniformBuffer(size_t size) {
+    return new UniformBuffer(m_allocator, size);
 }
 
 CommandBuffer* RenderDevice::newCommandBuffer() {
     return new CommandBuffer(m_logicalDevice, m_commandPool);
-}
-
-UniformBuffer* RenderDevice::newUniformBuffer(size_t size) {
-    return new UniformBuffer(m_logicalDevice, m_physicalDevice, size);
 }
 
 Image* RenderDevice::newImage(const u8* pixels, u32 width, u32 height, u32 channels) {
@@ -677,7 +688,7 @@ Image* RenderDevice::newImage(const u8* pixels, u32 width, u32 height, u32 chann
         pixelsFormatted = p;
     }
 
-    Image* image = new Image(m_logicalDevice, m_physicalDevice, m_commandPool, m_graphicsQueue, VK_FORMAT_R8G8B8A8_SRGB, pixelsFormatted, width, height);
+    Image* image = new Image(m_allocator, m_logicalDevice, m_physicalDevice, m_commandPool, m_graphicsQueue, VK_FORMAT_R8G8B8A8_SRGB, pixelsFormatted, width, height);
 
     // Delete the formatted pixels if they were created
     if (pixelsFormatted != pixels) {

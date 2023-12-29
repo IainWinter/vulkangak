@@ -4,7 +4,7 @@
 
 class IndexBuffer : public Buffer {
 public:
-    IndexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t indexCount, const u8* data);
+    IndexBuffer(VmaAllocator allocator, size_t indexCount, const u8* data);
     ~IndexBuffer();
 
     IndexBuffer(const IndexBuffer&) = delete;

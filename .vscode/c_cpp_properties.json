@@ -10,6 +10,8 @@
                 "${workspaceFolder}/asset_compiler/subprojects_src/msdf-atlas-gen/msdfgen",
                 "${workspaceFolder}/subprojects/imgui-1.89.9",
                 "${workspaceFolder}/subprojects/imgui-1.89.9/backends",
+                "${workspaceFolder}/subprojects/VulkanMemoryAllocator-3.0.1/include",
+
                 "/usr/local/Cellar/sdl2/2.26.3/include/SDL2",
                 "/opt/homebrew/Cellar/glm/0.9.9.8/include"
             ],
@@ -37,7 +39,10 @@
                 "${workspaceFolder}/subprojects/glm-0.9.9.8",
                 "${workspaceFolder}/subprojects/imgui-1.89.9",
                 "${workspaceFolder}/subprojects/imgui-1.89.9/backends",
+                "${workspaceFolder}/subprojects/VulkanMemoryAllocator-3.0.1/include",
+                
                 "C:/sdk/VulkanSDK/1.3.268.0/Include",
+                "C:/sdk/VulkanSDK/1.3.268.0/Include/vma",
                 "C:/include"
             ],
             "defines": [

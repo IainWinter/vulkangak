@@ -1,0 +1,197 @@
+{
+    "particle": {
+        "position": {
+            "x": -6.5,
+            "y": 0,
+            "z": 0
+        },
+        "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "scale": {
+            "x": 0.125,
+            "y": 0.125
+        },
+        "tint": {
+            "x": 1,
+            "y": 0.6,
+            "z": 0,
+            "w": 1
+        },
+        "uvScale": {
+            "x": 1,
+            "y": 1
+        },
+        "uvOffset": {
+            "x": 0,
+            "y": 0
+        },
+        "texture": 1,
+        "userIndex": 0,
+        "velocity": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "damping": 0,
+        "aVelocity": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "aDamping": 0,
+        "life": 1.8,
+        "enableScalingByLife": 1,
+        "finalScale": {
+            "x": 0,
+            "y": 0
+        },
+        "factorScale": 4.056,
+        "enableTintByLife": 1,
+        "finalTint": {
+            "x": 0,
+            "y": 0,
+            "z": 1,
+            "w": 0.1
+        },
+        "factorTint": 3.648,
+        "additiveBlend": 1,
+        "autoOrderZAroundOrigin": 1
+    },
+    "position": {
+        "min": {
+            "x": -0.4,
+            "y": -0.4,
+            "z": 0
+        },
+        "max": {
+            "x": 0.4,
+            "y": 0.4,
+            "z": 0
+        }
+    },
+    "rotation": {
+        "min": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "max": {
+            "x": 0,
+            "y": 0,
+            "z": 7.8
+        }
+    },
+    "scale": {
+        "min": {
+            "x": 0,
+            "y": 0
+        },
+        "max": {
+            "x": 0,
+            "y": 0
+        }
+    },
+    "tint": {
+        "min": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+        },
+        "max": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+        }
+    },
+    "texture": {
+        "min": 0,
+        "max": 0
+    },
+    "velocity": {
+        "min": {
+            "x": -10,
+            "y": -10,
+            "z": 0
+        },
+        "max": {
+            "x": 10,
+            "y": 10,
+            "z": 0
+        }
+    },
+    "damping": {
+        "min": 7,
+        "max": 28
+    },
+    "aVelocity": {
+        "min": {
+            "x": -10.9,
+            "y": -6.9,
+            "z": -3
+        },
+        "max": {
+            "x": 6.9,
+            "y": 13.6,
+            "z": 3.6
+        }
+    },
+    "aDamping": {
+        "min": 0,
+        "max": 0
+    },
+    "life": {
+        "min": 0,
+        "max": 0
+    },
+    "enableScalingByLife": {
+        "odds": 0
+    },
+    "finalScale": {
+        "min": {
+            "x": 0,
+            "y": 0
+        },
+        "max": {
+            "x": 0,
+            "y": 0
+        }
+    },
+    "factorScale": {
+        "min": 0,
+        "max": 0
+    },
+    "enableTintByLife": {
+        "odds": 0
+    },
+    "finalTint": {
+        "min": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+        },
+        "max": {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "w": 0
+        }
+    },
+    "factorTint": {
+        "min": 0,
+        "max": 0
+    },
+    "additiveBlend": {
+        "odds": 0
+    },
+    "numberPerSpawn": {
+        "min": 20,
+        "max": 20
+    },
+    "numberPerSecond": 357
+}

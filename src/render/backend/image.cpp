@@ -2,15 +2,15 @@
 #include "command_buffer.h"
 #include "vk_error.h"
 
-Image::Image(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, VkFormat format, const u8* pixels, u32 width, u32 height)
+Image::Image(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, VkFormat format, const u8* pixels, u32 width, u32 height)
     : m_device (device)
 {
     // Only handle RGBA
     size_t size = width * height * 4;
 
-    Buffer stagingBuffer = Buffer(device, physicalDevice, size, 
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    Buffer stagingBuffer = Buffer(allocator, size, 
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
     );
     
     stagingBuffer.setData(pixels);

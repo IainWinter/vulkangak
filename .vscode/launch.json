@@ -13,7 +13,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/",
             "environment": [],
-            "console": "externalTerminal"
+            "console": "externalTerminal",
         },
         {
             "name": "Launch Assets",
