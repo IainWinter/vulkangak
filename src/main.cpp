@@ -267,7 +267,7 @@ int main() {
             float dist = length(dir);
 
             arc->acc = dir / (dist * dist) * 10.f;
-
+            
             arc->update(tick.deltaTime);
         }
 
