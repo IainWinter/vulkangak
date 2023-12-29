@@ -2,12 +2,13 @@
 
 #include "typedef.h"
 #include "vulkan/vulkan.h"
+#include "vk_mem_alloc.h"
 
 u32 vulkanFindMemoryType(VkPhysicalDevice physicalDevice, u32 typeFilter, VkMemoryPropertyFlags properties);
 
 class Buffer {
 public:
-    Buffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties);
+    Buffer(VmaAllocator allocator, size_t size, VkBufferUsageFlags bufferUsage, VmaAllocationCreateFlagBits flags);
     virtual ~Buffer();
 
     Buffer(const Buffer&) = delete;
@@ -23,10 +24,11 @@ public:
     void unmap();
 
 protected:
-    VkDevice m_device;
+    VmaAllocator m_allocator;
 
 public:
     VkBuffer m_buffer;
-    VkDeviceMemory m_memory;
+    VmaAllocation m_memory;
+
     size_t m_size;
 };

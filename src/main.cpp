@@ -254,11 +254,12 @@ int main() {
     Shader* lineShader = device->newShader(lineShaderSource);
 
     std::vector<Arc*> arcs = {
-        new Arc(device),
-        new Arc(device),
-        new Arc(device),
-        new Arc(device),
+        new Arc(device)
     };
+
+    for (int i = 0; i < 100; i++) {
+        arcs.push_back(new Arc(device));
+    }
 
     float acc = 0.f;
 
@@ -267,41 +268,42 @@ int main() {
         window->pumpEvents();
         input->UpdateStates(tick.deltaTime);
 
-        mat4 model = mat4(1.0f);//rotate(mat4(1.0f), tick.applicationTime * radians(90.0f), vec3(0.0f, 0.0f, 1.0f));
-        
-        // acc += tick.deltaTime;
-        // while (acc > .005f) {
-        //     acc -= .005f;
+        mat4 model = mat4(1.0f);
+        vec2 mousePos = lens.ScreenToWorld2D(input->GetAxis("Mouse Position"));
 
-        //     ParticleMesh<SmokeParticle>::Instance instance{};
-        //     instance.color = vec4(1.f);
-        //     instance.pos = vec3(-1.5f, 0.f, 0.f);
+        acc += tick.deltaTime;
+        while (acc > .005f) {
+            acc -= .005f;
 
-        //     SmokeParticle particle{};
-        //     particle.velocity = random_vec2_min_max(3, -4, 10, 4);
-        //     particle.damping = random_float_min_add(3, 3);
-        //     particle.lifeTotal = random_float_min_add(1, 1);
-        //     particle.avelocity = random_float_centered_extent(5);
+            ParticleMesh<SmokeParticle>::Instance instance{};
+            instance.color = vec4(1.f);
+            instance.pos = vec3(mousePos, 0.f);
 
-        //     particleMesh->add(instance, particle);
-        // }
+            SmokeParticle particle{};
+            particle.velocity = random_vec2_min_max(3, -4, 10, 4);
+            particle.damping = random_float_min_add(3, 3);
+            particle.lifeTotal = random_float_min_add(1, 1);
+            particle.avelocity = random_float_centered_extent(5);
 
-        // particleMesh->update([&](u32 index, ParticleMesh<SmokeParticle>::Instance& instance, SmokeParticle& particle) {
-        //     particle.lifeCurrent += tick.deltaTime;
-        //     particle.lifeRatio = particle.lifeCurrent / particle.lifeTotal;
+            particleMesh->add(instance, particle);
+        }
 
-        //     if (particle.lifeRatio >= 1.f) {
-        //         particleMesh->remove(index);
-        //     }
+        particleMesh->update([&](u32 index, ParticleMesh<SmokeParticle>::Instance& instance, SmokeParticle& particle) {
+            particle.lifeCurrent += tick.deltaTime;
+            particle.lifeRatio = particle.lifeCurrent / particle.lifeTotal;
 
-        //     instance.pos += vec3(particle.velocity * tick.deltaTime, 0.f);
-        //     particle.velocity *= damping(tick.deltaTime, particle.damping);
+            if (particle.lifeRatio >= 1.f) {
+                particleMesh->remove(index);
+            }
 
-        //     instance.scale   = lerp(vec2(.01f), vec2(.4f), particle.lifeRatio);
-        //     instance.color.a = lerp(0.4f, 0.f, particle.lifeRatio);
-        // });
+            instance.pos += vec3(particle.velocity * tick.deltaTime, 0.f);
+            particle.velocity *= damping(tick.deltaTime, particle.damping);
 
-        // particleMesh->commit();
+            instance.scale   = lerp(vec2(.01f), vec2(.4f), particle.lifeRatio);
+            instance.color.a = lerp(0.4f, 0.f, particle.lifeRatio);
+        });
+
+        particleMesh->commit();
 
         for (int i = 1; i < arcs.size(); i++) {
             Arc* arc = arcs[i];
@@ -310,11 +312,11 @@ int main() {
             float dist = length(dir);
 
             arc->acc = dir / (dist * dist) * 10.f;
-            
+
             arc->update(tick.deltaTime);
         }
 
-        arcs[0]->pos = lens.ScreenToWorld2D(input->GetAxis("Mouse Position"));
+        arcs[0]->pos = mousePos;
         arcs[0]->update(tick.deltaTime);
 
         VulkanFrameImage frame;
@@ -336,12 +338,12 @@ int main() {
 
             CommandBuffer& cmd = *frame.commandBuffer;
 
-            // cmd.setShader(particleShader);
-            // cmd.pushConstant(particleShader, 0, &model);
-            // cmd.bindDescriptorSet(particleShader, descriptor->getSet(0));
+            cmd.setShader(particleShader);
+            cmd.pushConstant(particleShader, 0, &model);
+            cmd.bindDescriptorSet(particleShader, descriptor->getSet(0));
 
-            // particleMesh->sendToDevice();
-            // particleMesh->draw(cmd);
+            particleMesh->sendToDevice();
+            particleMesh->draw(cmd);
 
             cmd.setShader(lineShader);
             cmd.bindDescriptorSet(lineShader, descriptor->getSet(0));

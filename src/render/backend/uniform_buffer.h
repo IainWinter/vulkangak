@@ -4,7 +4,7 @@
 
 class UniformBuffer : public Buffer {
 public:
-    UniformBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t size);
+    UniformBuffer(VmaAllocator allocator, size_t size);
     ~UniformBuffer();
 
     void setData(const void* data);

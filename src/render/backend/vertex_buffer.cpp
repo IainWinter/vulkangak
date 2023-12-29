@@ -1,11 +1,10 @@
 #include "vertex_buffer.h"
 
-VertexBuffer::VertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t vertexSize, size_t vertexCount, const void* data)
-    : Buffer        (device, 
-                     physicalDevice, 
+VertexBuffer::VertexBuffer(VmaAllocator allocator, size_t vertexSize, size_t vertexCount, const void* data)
+    : Buffer        (allocator,
                      vertexSize * vertexCount,
                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+                     VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT)
     , m_vertexCount (vertexCount)
 {
     if (data) {

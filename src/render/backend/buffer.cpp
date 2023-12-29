@@ -17,33 +17,45 @@ u32 vulkanFindMemoryType(VkPhysicalDevice physicalDevice, u32 typeFilter, VkMemo
     throw std::runtime_error("Failed to find suitable memory type!");
 }
 
-Buffer::Buffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties)
-    : m_device (device)
-    , m_size   (size)
+Buffer::Buffer(VmaAllocator allocator, size_t size, VkBufferUsageFlags bufferUsage, VmaAllocationCreateFlagBits memoryFlags)
+    : m_allocator (allocator)
+    , m_size      (size)
 {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
-    bufferInfo.usage = usage;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.usage = bufferUsage;
+    
+    VmaAllocationCreateInfo allocInfo{};
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocInfo.flags = memoryFlags;
 
-    vk(vkCreateBuffer(device, &bufferInfo, nullptr, &m_buffer));
+    vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &m_buffer, &m_memory, nullptr);
 
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, m_buffer, &memRequirements);
+    // VkBufferCreateInfo bufferInfo{};
+    // bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    // bufferInfo.size = size;
+    // bufferInfo.usage = usage;
+    // bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = vulkanFindMemoryType(physicalDevice, memRequirements.memoryTypeBits, memoryProperties);
+    // vk(vkCreateBuffer(device, &bufferInfo, nullptr, &m_buffer));
 
-    vk(vkAllocateMemory(device, &allocInfo, nullptr, &m_memory));
-    vk(vkBindBufferMemory(device, m_buffer, m_memory, 0));
+    // VkMemoryRequirements memRequirements;
+    // vkGetBufferMemoryRequirements(device, m_buffer, &memRequirements);
+
+    // VkMemoryAllocateInfo allocInfo{};
+    // allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    // allocInfo.allocationSize = memRequirements.size;
+    // allocInfo.memoryTypeIndex = vulkanFindMemoryType(physicalDevice, memRequirements.memoryTypeBits, memoryProperties);
+
+    // vk(vkAllocateMemory(device, &allocInfo, nullptr, &m_memory));
+    // vk(vkBindBufferMemory(device, m_buffer, m_memory, 0));
 }
 
 Buffer::~Buffer() {
-    vkDestroyBuffer(m_device, m_buffer, nullptr);
-    vkFreeMemory(m_device, m_memory, nullptr);
+    //vkDestroyBuffer(m_device, m_buffer, nullptr);
+    //vkFreeMemory(m_device, m_memory, nullptr);
+    vmaDestroyBuffer(m_allocator, m_buffer, m_memory);
 }
 
 void Buffer::setData(const void* data) {
@@ -60,16 +72,19 @@ void Buffer::setData(u32 offset, u32 size, const void* data) {
 
 void* Buffer::map() {
     void* mappedPtr;
-    vk(vkMapMemory(m_device, m_memory, 0, m_size, 0, &mappedPtr));
+    vk(vmaMapMemory(m_allocator, m_memory, &mappedPtr));
+    //vk(vkMapMemory(m_device, m_memory, 0, m_size, 0, &mappedPtr));
     return mappedPtr;
 }
 
 void* Buffer::map(u32 offset, u32 size) {
     void* mappedPtr;
-    vk(vkMapMemory(m_device, m_memory, offset, size, 0, &mappedPtr));
+    vk(vmaMapMemory(m_allocator, m_memory, &mappedPtr));
+    //vk(vkMapMemory(m_device, m_memory, offset, size, 0, &mappedPtr));
     return mappedPtr;
 }
 
 void Buffer::unmap() {
-    vkUnmapMemory(m_device, m_memory);
+    vmaUnmapMemory(m_allocator, m_memory);
+    //vkUnmapMemory(m_device, m_memory);
 }

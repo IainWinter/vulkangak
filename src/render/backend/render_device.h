@@ -10,6 +10,8 @@
 #include "descriptor_group.h"
 #include "imgui_loop.h"
 
+#include "vk_mem_alloc.h"
+
 #include <vector>
 
 struct VulkanSwapChainImage {
@@ -52,8 +54,9 @@ public:
     
     VertexBuffer* newVertexBuffer(size_t vertexSize, size_t vertexCount, const void* data);
     IndexBuffer* newIndexBuffer(const std::vector<u32>& indices);
-    CommandBuffer* newCommandBuffer();
     UniformBuffer* newUniformBuffer(size_t size);
+    
+    CommandBuffer* newCommandBuffer();
 
     Image* newImage(const u8*  pixels, u32 width, u32 height, u32 channels);
     ImageSampler* newImageSampler();
@@ -148,9 +151,5 @@ private:
     u32 m_currentFrameIndex = 0;
     u32 m_currentImageIndex = 0;
 
-    // Allocate a single pool per type
-    // Requires preallocation of total size for each
-    // which is annoying, but known from asset packaget
-    //std::unordered_map<VkDescriptorType, VkDescriptorPool> m_descriptorPools;
-    // std::vector<DescriptorPerFrame> m_descriptors;
+    VmaAllocator m_allocator;
 };

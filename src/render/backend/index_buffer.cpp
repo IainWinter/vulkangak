@@ -1,11 +1,10 @@
 #include "index_buffer.h"
 
-IndexBuffer::IndexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t indexCount, const u8* data)
-    : Buffer       (device, 
-                    physicalDevice, 
+IndexBuffer::IndexBuffer(VmaAllocator allocator, size_t indexCount, const u8* data)
+    : Buffer       (allocator,
                     sizeof(u32) * indexCount,
-                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+                    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                    VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT)
     , m_indexCount (indexCount)
 {
     setData(data);

@@ -2,12 +2,11 @@
 
 #include <string.h>
 
-UniformBuffer::UniformBuffer(VkDevice device, VkPhysicalDevice physicalDevice, size_t size) 
-    : Buffer (device, 
-              physicalDevice, 
+UniformBuffer::UniformBuffer(VmaAllocator allocator, size_t size) 
+    : Buffer (allocator,
               size,
-              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT)
 {
     m_persistentMappedPtr = map();
 }

@@ -6,6 +6,7 @@ sources = [
     'src/window.cpp',
     'src/simulation_loop.cpp',
     'src/input.cpp',
+    'src/job.cpp',
 
     'src/math/math.cpp',
     'src/math/random.cpp',
@@ -34,8 +35,9 @@ include_dirs = [
 deps = [
 	dependency('glm'),
 	dependency('sdl2', default_options: { 'test': false }),
+    dependency('imgui'),
 	dependency('vulkan'),
-    dependency('imgui')
+	dependency('vulkan-memory-allocator'),
 ]
 
 args = ['-DSDL_MAIN_HANDLED=1']
