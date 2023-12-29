@@ -24,6 +24,7 @@ AssetInput:
 
 #### Basic types
 ```
+char: <1 byte>
 boolean: <1 byte>
 number: <8 bytes>
 float: <4 bytes>
