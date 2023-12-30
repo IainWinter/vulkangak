@@ -4,6 +4,8 @@
 #include "math/math.h"
 
 void random_set_seed(u32 seed);
+u32 random_pcg_hash(u32 input);
+u32 random_next();
 
 // Generate values between (0, 1)
 bool  random_bool ();
@@ -125,4 +127,16 @@ struct RandomFloat4 {
     vec4 max;
     operator vec4() const { return get(); }
     vec4 get() const { return random_vec4_min_max(min, max); }
+};
+
+struct RandomCircle {
+    vec2 radius;
+    operator vec2() const { return get(); }
+    vec2 get() const { return random_vec2_circle() * radius;  }
+};
+
+struct RandomSphere {
+    vec3 radius;
+    operator vec3() const { return get(); }
+    vec3 get() const { return random_vec3_circle() * radius;  }
 };

@@ -110,7 +110,7 @@ VkDescriptorSet DescriptorGroup::getSet(int frameIndex, int setIndex) {
     return m_sets[frameIndex][setIndex];
 }
 
-void DescriptorGroup::write(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler) {
+void DescriptorGroup::writeImage(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler) {
     DescriptorBinding binding = m_bindings[bindingIndex];
 
     VkDescriptorImageInfo imageInfo{};
@@ -130,7 +130,7 @@ void DescriptorGroup::write(int frameIndex, int bindingIndex, Image* image, Imag
     vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }
 
-void DescriptorGroup::write(int frameIndex, int bindingIndex, UniformBuffer* uniformBuffer) {
+void DescriptorGroup::writeUniformBuffer(int frameIndex, int bindingIndex, UniformBuffer* uniformBuffer) {
     DescriptorBinding binding = m_bindings[bindingIndex];
 
     VkDescriptorBufferInfo bufferInfo{};

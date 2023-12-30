@@ -99,6 +99,11 @@ Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSourc
     // pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
     // additive
+    // pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    // pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    // pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    // pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+
     pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
     pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;

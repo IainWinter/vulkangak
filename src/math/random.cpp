@@ -1,22 +1,35 @@
 #include "random.h"
 
-#include <stdlib.h>
 #include <cmath>
 
+static u32 s_seed;
+static u32 s_max = 0xFFFFFFFF;
+
 void random_set_seed(u32 seed) {
-    srand(seed);
+    s_seed = seed;
+}
+
+u32 random_pcg_hash(u32 input) {
+    u32 state = input * 747796405u + 2891336453u;
+    u32 word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+u32 random_next() {
+    s_seed = random_pcg_hash(s_seed);
+    return s_seed;
 }
 
 bool random_bool() {
-    return rand() % 2 == 0;
+    return random_next() % 2 == 0;
 }
 
 s32 random_s32() {
-    return rand() % 2;
+    return random_next() % 2;
 }
 
 float random_float() {
-    return rand() / (float)RAND_MAX;
+    return random_next() / (float)s_max;
 }
 
 vec2 random_vec2() {
@@ -198,7 +211,7 @@ vec3 random_vec3_ring() {
 
     return vec3(
         sin(theta) * cos(phi),
-        sin(theta) * sin(theta),
+        sin(theta) * sin(phi),
         cos(theta)
     );
 }

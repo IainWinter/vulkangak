@@ -1,5 +1,4 @@
 #include "simulation_loop.h"
-#include "SDL.h"
 
 SimulationLoop::SimulationLoop() {
     m_startTime = std::chrono::high_resolution_clock::now();

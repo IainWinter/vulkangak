@@ -37,14 +37,14 @@ struct ParticleSpawner {
     Particle::Instance instance;
 	Particle particle;
 
-	RandomFloat3 position;
+	RandomSphere position;
 	RandomFloat3 rotation;
 	RandomFloat2 scale;
 
 	RandomFloat4 tint;
 	RandomInt texture;
 
-	RandomFloat3 velocity;
+	RandomSphere velocity;
 	RandomFloat damping;
 
 	RandomFloat3 aVelocity;

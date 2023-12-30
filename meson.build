@@ -3,13 +3,21 @@ project('vkTestCpp', 'cpp', default_options: ['cpp_std=c++20'])
 sources = [
     'src/main.cpp',
 
-    'src/window.cpp',
-    'src/simulation_loop.cpp',
-    'src/input.cpp',
+    'src/containers/defer_delete.cpp',
+
+    'src/game/game_loop.cpp',
+    'src/game/simulation_loop.cpp',
+    'src/game/input.cpp',
 
     'src/math/math.cpp',
     'src/math/random.cpp',
 
+    'src/render/lens.cpp',
+
+    'src/render/line/line_mesh.cpp',
+    'src/render/particle/particle_mesh.cpp',
+
+    'src/render/backend/window.cpp',
     'src/render/backend/render_device.cpp',
     'src/render/backend/descriptor_group.cpp',
     'src/render/backend/command_buffer.cpp',
@@ -20,11 +28,6 @@ sources = [
     'src/render/backend/index_buffer.cpp',
     'src/render/backend/uniform_buffer.cpp',
     'src/render/backend/imgui_loop.cpp',
-
-    'src/render/line/line_mesh.cpp',
-    'src/render/particle/particle_mesh.cpp',
-
-    'src/render/lens.cpp',
 ]
 
 include_dirs = [
@@ -40,6 +43,12 @@ deps = [
 	dependency('vulkan-memory-allocator'),
 ]
 
-args = ['-DSDL_MAIN_HANDLED=1']
+args = [
+    # Use my own main function
+    '-DSDL_MAIN_HANDLED=1', 
+
+    # Vulkan needs the clip space to be [0, 1]
+    '-DGLM_FORCE_DEPTH_ZERO_TO_ONE=1'
+]
 
 executable('vkTestCpp', sources, include_directories: include_dirs, dependencies: deps, cpp_args: args)

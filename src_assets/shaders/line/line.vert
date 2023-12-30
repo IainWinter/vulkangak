@@ -20,7 +20,7 @@ layout (location = 4) in float ii_distanceFromStartB;
 
 void main() {
     float ratioToEnd = mix(ii_distanceFromStartA, ii_distanceFromStartB, i_pos.z) / PushConstants.totalLength;
-    float width = 0.05 * ratioToEnd;
+    float width = .2 * ratioToEnd;
 
     vec2 xBasis = normalize(ii_pointB - ii_pointA);
     vec2 yBasis = vec2(-xBasis.y, xBasis.x);
