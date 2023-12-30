@@ -16,8 +16,8 @@ public:
     virtual void createStaticDeviceResources(RenderDevice* device) = 0;
     virtual void createGameState() = 0;
 
-    virtual void simulationTick(InputMap* input, SimulationTick tick) = 0;
-    virtual void render(VulkanFrameImage frame, RenderDevice* device) = 0;
+    virtual void simulationTick(SimulationTick tick, InputMap* input) = 0;
+    virtual void render(SimulationTick tick, VulkanFrameImage frame, RenderDevice* device, ImGuiLoop* imgui) = 0;
 
     virtual void destroyGameState() = 0;
     virtual void destroyStaticDeviceResources(RenderDevice* device) = 0;

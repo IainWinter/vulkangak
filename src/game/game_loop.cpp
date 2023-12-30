@@ -43,11 +43,11 @@ void GameLoop::run() {
         m_window->pumpEvents();
         m_input->UpdateStates(tick.deltaTime);
 
-        m_game->simulationTick(m_input, tick);
+        m_game->simulationTick(tick, m_input);
 
         VulkanFrameImage frame;
         if (m_device->waitBeginFrame(&frame)) {
-            m_game->render(frame, m_device);
+            m_game->render(tick, frame, m_device, m_imgui);
         }
 
         // wait till after render

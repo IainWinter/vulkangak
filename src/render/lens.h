@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lith/math.h"
+#include "math/math.h"
 #include "glm/gtx/quaternion.hpp"
 
 class CameraLens

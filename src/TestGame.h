@@ -1,8 +1,13 @@
 #pragma once
 
+#include "log.h"
+
 #include "game/simulation_tick.h"
 #include "game/game_interface.h"
 #include "game/input.h"
+
+#include "render/backend/imgui_loop.h"
+#include "imgui.h"
 
 #include "render/line/line_mesh.h"
 #include "render/particle/particle_mesh.h"
@@ -16,8 +21,6 @@
 
 #include "containers/pop_back.h"
 #include "containers/defer_delete.h"
-
-#include "log.h"
 
 struct CameraUBO {
     mat4 view;
@@ -174,12 +177,6 @@ public:
             m_descriptor->writeImage(i, 0, m_image, m_imageSampler);
         }
 
-        // Create arcs
-
-        // for (int i = 0; i < 1000; i++) {
-        //     m_arcs.push_back(new Arc(device));
-        // }
-
         m_device = device;
     }
 
@@ -187,10 +184,12 @@ public:
         m_lens = CameraLens::Orthographic(32, 16.f/9.f, -10, 10);
 
         ParticleSpawner spawner{};
-        spawner.particle.lifetime = 1.8f;
+        spawner.particle.lifetime = 1.8f / 4.f;
         
+        spawner.instance.rotation.z = PI / 2.f;
+
         spawner.particle.enableScalingByLife = true;
-        spawner.particle.initialScale = vec2(0.125f);
+        spawner.particle.initialScale = vec2(0.12f);
         spawner.particle.finalScale = vec2(0);
         spawner.particle.factorScale = 4.056f;
         
@@ -210,7 +209,7 @@ public:
         m_particleSpawner = spawner;
     }
 
-    void simulationTick(InputMap* input, SimulationTick tick) override {
+    void simulationTick(SimulationTick tick, InputMap* input) override {
         vec2 mousePos = m_lens.ScreenToWorld2D(input->GetAxis("Mouse Position"));
 
         if (input->GetButton("Mouse Click")) {
@@ -222,7 +221,7 @@ public:
 
         if (input->GetOnce("Mouse Click")) {
             vec2 vel = normalize_safe(mousePos) * 10.f;
-            m_orbitals.push_back(new Orbital(m_device, vec2(0, 0), vel, 150.f, 5, 10));
+            m_orbitals.push_back(new Orbital(m_device, vec2(0, 0), vel, 150.f, 5, 0));
         }
 
         m_particleMesh->update(tick.deltaTime);
@@ -246,18 +245,9 @@ public:
                 pop_back(m_orbitals, i);
             }
         }
-
-        // for (Arc* arc : m_arcs) {
-        //     vec2 dir = mousePos- arc->pos;
-        //     float dist = length(dir);
-
-        //     arc->acc = dir / (dist * dist) * 10.f;
-            
-        //     arc->update(tick.deltaTime);
-        // }
     }
 
-    void render(VulkanFrameImage frame, RenderDevice* device) override {
+    void render(SimulationTick tick, VulkanFrameImage frame, RenderDevice* device, ImGuiLoop* imgui) override {
         float aspect = frame.width / (float)frame.height;
         float width = 2 * aspect;
 
@@ -290,14 +280,6 @@ public:
         LineShaderPushConstants linePush{};
         linePush.model = model;
 
-        // for (Arc* arc : m_arcs) {
-        //     linePush.totalLength = arc->lineMesh->totalLength();
-        //     cmd.pushConstant(m_lineShader, 0, &linePush);
-
-        //     arc->lineMesh->sendToDevice();
-        //     arc->lineMesh->draw(cmd);
-        // }
-
         for (Orbital* o : m_orbitals) {
             cmd.pushConstant(m_lineShader, 0, &linePush);
 
@@ -310,16 +292,16 @@ public:
             }
         }
 
-        // imgui->beginFrame();
-        // {
-        //     if (ImGui::Begin("Test")) {
-        //         ImGui::Text("This is a string");
+        imgui->beginFrame();
+        {
+            if (ImGui::Begin("Test")) {
+                ImGui::Text("This is a string");
 
-        //         ImGui::Text("%f fps", 1.f / tick.deltaTime);
-        //     }
-        //     ImGui::End();
-        // }
-        // imgui->submitFrame(cmd.m_commandBuffer);
+                ImGui::Text("%f fps", 1.f / tick.deltaTime);
+            }
+            ImGui::End();
+        }
+        imgui->submitFrame(cmd.m_commandBuffer);
 
         vkCmdEndRenderPass(cmd.m_commandBuffer);
         vkEndCommandBuffer(cmd.m_commandBuffer);
@@ -331,14 +313,7 @@ public:
     }
 
     void destroyStaticDeviceResources(RenderDevice* device) {
-        // for (Arc* arc : m_arcs) {
-        //     delete arc;
-        // }
-
         for (Orbital* o : m_orbitals) {
-            delete o;
-        }
-        for (auto [o, _] : m_orbitalsToDelete) {
             delete o;
         }
 
@@ -370,6 +345,4 @@ private:
 
     // either give full access to this or put it in the update
     RenderDevice* m_device;
-
-    std::vector<std::pair<Orbital*, int>> m_orbitalsToDelete;
 };

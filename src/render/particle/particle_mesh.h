@@ -92,6 +92,13 @@ public:
     void draw(CommandBuffer& cmd);
 
     void add(const Instance& instance, const Particle& particle);
+
+private:
+    // index is not stable so don't expose
+    // could use id, but particles are large in number
+    // and short in lifetime so individually addressing one
+    // is not needed
+
     void remove(s32 index);
 
     std::pair<Instance&, Particle&> get(s32 index);
