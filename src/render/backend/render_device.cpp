@@ -380,9 +380,19 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     allocatorInfo.device = m_logicalDevice;
 
     vk(vmaCreateAllocator(&allocatorInfo, &m_allocator));
+
+    // factories
+
+    bufferFactory = new BufferFactoryVulkan(m_logicalDevice, m_allocator);
+    imageFactory = new ImageFactoryVulkan(m_logicalDevice, m_allocator, m_commandPool, m_graphicsQueue, bufferFactory);
+    imageSamplerFactory = new ImageSamplerFactoryVulkan(m_logicalDevice);
 }
 
 RenderDevice::~RenderDevice() {
+    delete bufferFactory;
+    delete imageFactory;
+    delete imageSamplerFactory;
+
     vmaDestroyAllocator(m_allocator);
 
     for (const VulkanFrame& frame : m_frames) {
@@ -512,6 +522,16 @@ void RenderDevice::createPresentRenderPass() {
 }
 
 void RenderDevice::createSwapchain() {
+    // For multi-sampling create offscreen color and depth image / attachments
+
+    // imageFactory->createImage2DEmptyMultisample(
+    //     m_extent.width,
+    //     m_extent.height,
+    //     ImageFormat_RGB_8_SRGB,
+    //     ImageSampleCount_4
+    // );
+
+
     VkSwapchainCreateInfoKHR swapChainInfo{};
     swapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     swapChainInfo.surface = m_surface;
@@ -521,6 +541,10 @@ void RenderDevice::createSwapchain() {
     swapChainInfo.imageExtent = m_extent;
     swapChainInfo.imageArrayLayers = 1;
     swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapChainInfo.preTransform = m_swapChainTransform;
+    swapChainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    swapChainInfo.presentMode = m_present;
+    swapChainInfo.clipped = true;
 
     if (m_graphicsQueueIndex != m_presentQueueIndex) {
         u32 queueIndices[] = {
@@ -537,12 +561,6 @@ void RenderDevice::createSwapchain() {
         swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
     }
 
-    swapChainInfo.preTransform = m_swapChainTransform;
-    swapChainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-
-    swapChainInfo.presentMode = m_present;
-    swapChainInfo.clipped = true;
-
     vk(vkCreateSwapchainKHR(m_logicalDevice, &swapChainInfo, nullptr, &m_swapChain));
 
     u32 imageCount;
@@ -556,15 +574,12 @@ void RenderDevice::createSwapchain() {
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = images[i];
-
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = m_format.format;
-
         viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
         viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
@@ -596,6 +611,8 @@ void RenderDevice::createSwapchain() {
 }
 
 void RenderDevice::destroySwapchain() {
+
+
     for (VulkanSwapChainImage& image : m_images) {
         vkDestroyFramebuffer(m_logicalDevice, image.framebuffer, nullptr);
         vkDestroyImageView(m_logicalDevice, image.view, nullptr);
@@ -650,56 +667,8 @@ Shader* RenderDevice::newShader(const VulkanShaderSource& source) {
     return new Shader(m_logicalDevice, m_renderPass, source);
 }
 
-VertexBuffer* RenderDevice::newVertexBuffer(size_t vertexSize, size_t vertexCount, const void* data) {
-    return new VertexBuffer(m_allocator, vertexSize, vertexCount, data);
-}
-
-IndexBuffer* RenderDevice::newIndexBuffer(const std::vector<u32>& indices) {
-    return new IndexBuffer(m_allocator, indices.size(), (const u8*)indices.data());
-}
-
-UniformBuffer* RenderDevice::newUniformBuffer(size_t size) {
-    return new UniformBuffer(m_allocator, size);
-}
-
 CommandBuffer* RenderDevice::newCommandBuffer() {
     return new CommandBuffer(m_logicalDevice, m_commandPool);
-}
-
-Image* RenderDevice::newImage(const u8* pixels, u32 width, u32 height, u32 channels) {
-    // This should conform the pixels data to the actual image format needed
-
-    // Convert all pixel data to 4 component rgba format
-    // Seems like for my gpu this is the only format that works
-    // Should query physical device, and then make a function that conforms it
-
-    const u8* pixelsFormatted = pixels;
-
-    if (channels != 4) {
-        u8* p = new u8[width * height * 4];
-
-        for (u32 i = 0; i < width * height; i++) {
-            p[i * 4 + 0] = pixels[i * 3 + 0];
-            p[i * 4 + 1] = pixels[i * 3 + 1];
-            p[i * 4 + 2] = pixels[i * 3 + 2];
-            p[i * 4 + 3] = 0xFF;
-        }
-
-        pixelsFormatted = p;
-    }
-
-    Image* image = new Image(m_allocator, m_logicalDevice, m_physicalDevice, m_commandPool, m_graphicsQueue, VK_FORMAT_R8G8B8A8_SRGB, pixelsFormatted, width, height);
-
-    // Delete the formatted pixels if they were created
-    if (pixelsFormatted != pixels) {
-        delete[] pixelsFormatted;
-    }
-
-    return image;
-}
-
-ImageSampler* RenderDevice::newImageSampler() {
-    return new ImageSampler(m_logicalDevice);
 }
 
 void RenderDevice::updateDescriptorSet(const VkWriteDescriptorSet& write) {

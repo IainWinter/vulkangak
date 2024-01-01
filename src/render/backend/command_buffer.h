@@ -1,5 +1,7 @@
 #pragma once
 
+#include "render/backend/type/buffer.h"
+
 #include "typedef.h"
 #include "vulkan/vulkan.h"
 
@@ -32,8 +34,8 @@ public:
     void pushConstant(Shader* shader, u32 index, const void* data);
     void bindDescriptorSet(Shader* shader, VkDescriptorSet descriptorSet);
 
-    void bindVertexBuffers(u32 count, VertexBuffer* vertexBuffers[]);
-    void bindIndexBuffer(IndexBuffer* indexBuffer);
+    void bindVertexBuffers(u32 count, Buffer* vertexBuffers[]);
+    void bindIndexBuffer(Buffer* indexBuffer);
 
     void draw(u32 vertexCount, u32 instanceCount);
     void drawIndexed(u32 indexCount, u32 instanceCount);

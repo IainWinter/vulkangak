@@ -1,16 +1,22 @@
 #pragma once
 
-#include "vec2.hpp"
-using namespace glm;
+#include "asset/font.h"
+#include "asset/image.h"
+#include "render/backend/render_device.h"
 
-struct FontGlyph {
-    vec2 posMin;
-    vec2 posMax;
-    vec2 uvMin;
-    vec2 uvMax;
+class Font {
+public:
+    // could pass image if font asset didn't just store path
+    Font(RenderDevice* device, FontAsset fontAsset, ImageAsset fontImageAsset);
+    ~Font();
 
-    float advance;
-    int index;
-    int character;
+    Font(const Font&) = delete;
+    Font& operator=(const Font&) = delete;
+
+    
+
+private:
+    Image* m_image;
+
+    FontAsset m_font;
 };
-

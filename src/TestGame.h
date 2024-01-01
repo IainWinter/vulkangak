@@ -12,6 +12,7 @@
 #include "render/line/line_mesh.h"
 #include "render/particle/particle_mesh.h"
 #include "render/lens.h"
+#include "render/backend/render_device.h"
 
 #include "asset/package.h"
 #include "asset/image.h"
@@ -21,6 +22,8 @@
 
 #include "containers/pop_back.h"
 #include "containers/defer_delete.h"
+
+#include "render/backend/type/image.h"
 
 struct CameraUBO {
     mat4 view;
@@ -42,8 +45,8 @@ struct Arc {
 
     LineMesh* lineMesh;
 
-    Arc(RenderDevice* device) {
-        lineMesh = new LineMesh(device);
+    Arc(BufferFactory* bufferFactory) {
+        lineMesh = new LineMesh(bufferFactory);
         lineMesh->add(pos);
         lastpos = pos;
     }
@@ -76,7 +79,7 @@ struct Orbital {
 
     std::vector<Arc*> arcs;
 
-    Orbital(RenderDevice* device, vec2 center, vec2 velocity, float mass, float lifetime, int numArcs) {
+    Orbital(BufferFactory* bufferFactory, vec2 center, vec2 velocity, float mass, float lifetime, int numArcs) {
         this->center = center;
         this->vel = velocity;
         this->mass = mass;
@@ -84,7 +87,7 @@ struct Orbital {
         this->life = 0.f;
 
         for (int i = 0; i < numArcs; i++) {
-            arcs.push_back(new Arc(device));
+            arcs.push_back(new Arc(bufferFactory));
         }
     }
 
@@ -150,7 +153,7 @@ public:
         particleShaderSource.vertexInputs = ParticleMesh::getLayout();
 
         m_particleShader = device->newShader(particleShaderSource);
-        m_particleMesh = new ParticleMesh(device, 13000);
+        m_particleMesh = new ParticleMesh(device->bufferFactory, 13000);
 
         // Create line shader
 
@@ -165,13 +168,12 @@ public:
 
         // Camera
 
-        m_cameraUBO = device->newUniformBuffer<CameraUBO>();
+        m_cameraUBO = device->bufferFactory->createUniformBufferEmptyFromType<CameraUBO>();
 
         // Load and write image to group
 
-        ImageAsset img = package["test.image"];
-        m_image = device->newImage((u8*)img.pixels.data(), img.width, img.height, img.channels);
-        m_imageSampler = device->newImageSampler();
+        m_image = device->imageFactory->createImage2DFromAsset(package["test.image"]);
+        m_imageSampler = device->imageSamplerFactory->createImageSampler();
 
         for (u32 i = 0; i < device->getFrameSyncInfo().framesInFlight(); i++) {
             m_descriptor->writeImage(i, 0, m_image, m_imageSampler);
@@ -221,7 +223,7 @@ public:
 
         if (input->GetOnce("Mouse Click")) {
             vec2 vel = normalize_safe(mousePos) * 10.f;
-            m_orbitals.push_back(new Orbital(m_device, vec2(0, 0), vel, 150.f, 5, 0));
+            m_orbitals.push_back(new Orbital(m_device->bufferFactory, vec2(0, 0), vel, 150.f, 5, 10));
         }
 
         m_particleMesh->update(tick.deltaTime);
@@ -295,8 +297,6 @@ public:
         imgui->beginFrame();
         {
             if (ImGui::Begin("Test")) {
-                ImGui::Text("This is a string");
-
                 ImGui::Text("%f fps", 1.f / tick.deltaTime);
             }
             ImGui::End();
@@ -317,9 +317,10 @@ public:
             delete o;
         }
 
-        delete m_cameraUBO;
-        delete m_image;
-        delete m_imageSampler;
+        device->bufferFactory->destroyBuffer(m_cameraUBO);
+        device->imageFactory->destroyImage(m_image);
+        device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
+
         delete m_lineShader;
         delete m_particleMesh;
         delete m_particleShader;
@@ -328,7 +329,7 @@ public:
 
 private:
     CameraLens m_lens;
-    UniformBuffer* m_cameraUBO;
+    Buffer* m_cameraUBO;
 
     ParticleSpawner m_particleSpawner;
     ParticleMesh* m_particleMesh;

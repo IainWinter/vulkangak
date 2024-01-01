@@ -1,13 +1,7 @@
 #pragma once
 
-#include "typedef.h"
-#include "vulkan/vulkan.h"
+#include "render/vertex_layout.h"
 #include <vector>
-
-struct VulkanVertexLayout {
-    VkVertexInputBindingDescription description;
-    std::vector<VkVertexInputAttributeDescription> attributes;
-};
 
 struct VulkanPushConstant {
     VkShaderStageFlags stages;
@@ -21,16 +15,6 @@ struct VulkanShaderSource {
     std::vector<VulkanPushConstant> pushConstants;
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
     std::vector<VulkanVertexLayout> vertexInputs;
-};
-
-class VertexLayoutBuilder {
-public:
-    VertexLayoutBuilder& buffer(size_t stride, bool instanced);
-    VertexLayoutBuilder& attribute(u32 location, size_t offset, VkFormat format);
-    std::vector<VulkanVertexLayout> build() const;
-
-private:
-    std::vector<VulkanVertexLayout> buffers;
 };
 
 class Shader {

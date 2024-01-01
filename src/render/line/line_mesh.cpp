@@ -2,7 +2,9 @@
 
 #include "glm/geometric.hpp"
 
-LineMesh::LineMesh(RenderDevice* device, int capResolution) {
+LineMesh::LineMesh(BufferFactory* bufferFactory, int capResolution) 
+    : m_bufferFactory (bufferFactory)
+{
     // https://wwwtyro.net/2019/11/18/instanced-lines.html
 
     m_vertices = {
@@ -32,13 +34,13 @@ LineMesh::LineMesh(RenderDevice* device, int capResolution) {
         m_vertices.push_back({{ .5f * cos(theta1), .5f * sin(theta1), 1}});
     }
 
-    m_vertexBuffer = device->newVertexBuffer<Vertex>(m_vertices);
-    m_instanceBuffer = device->newVertexBuffer(sizeof(Point), 100, nullptr);
+    m_vertexBuffer = bufferFactory->createVertexBufferFromVector(m_vertices);
+    m_instanceBuffer = bufferFactory->createVertexBufferEmpty(sizeof(Point), 100);
 }
 
 LineMesh::~LineMesh() {
-    delete m_vertexBuffer;
-    delete m_instanceBuffer;
+    m_bufferFactory->destroyBuffer(m_vertexBuffer);
+    m_bufferFactory->destroyBuffer(m_instanceBuffer);
 }
 
 void LineMesh::sendToDevice() {
@@ -64,7 +66,7 @@ void LineMesh::draw(CommandBuffer& cmd) {
         return;
     }
     
-    VertexBuffer* buffers[2] = { m_vertexBuffer, m_instanceBuffer };
+    Buffer* buffers[2] = { m_vertexBuffer, m_instanceBuffer };
 
     cmd.bindVertexBuffers(2, buffers);
     cmd.draw(m_vertices.size(), m_points.size() - 1);

@@ -1,10 +1,13 @@
 #pragma once
 
-#include "frame.h"
-#include "image.h"
-#include "uniform_buffer.h"
+#include "render/backend/type/buffer.h"
+#include "render/backend/type/image.h"
+#include "render/backend/type/image_sampler.h"
 
+#include "frame.h"
 #include <vector>
+
+#include "vulkan/vulkan.h"
 
 // Seems like these need to be pre alloced and be double allocated for each frame
 
@@ -27,7 +30,7 @@ public:
     VkDescriptorSet getSet(int frameIndex, int setIndex);
 
     void writeImage(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler);
-    void writeUniformBuffer(int frameIndex, int bindingIndex, UniformBuffer* uniformBuffer);
+    void writeUniformBuffer(int frameIndex, int bindingIndex, Buffer* uniformBuffer);
 
 private:
     VkDevice m_device;

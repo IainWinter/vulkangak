@@ -3,33 +3,6 @@
 
 #include <stdexcept>
 
-VertexLayoutBuilder& VertexLayoutBuilder::buffer(size_t stride, bool instanced) {
-    VulkanVertexLayout buffer{};
-    buffer.description.binding = (u32)buffers.size();
-    buffer.description.stride = stride;
-    buffer.description.inputRate = instanced ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
-
-    buffers.push_back(buffer);
-
-    return *this;
-}
-
-VertexLayoutBuilder& VertexLayoutBuilder::attribute(u32 location, size_t offset, VkFormat format) {
-    VkVertexInputAttributeDescription attribute{};
-    attribute.binding = (u32)buffers.size() - 1;
-    attribute.location = location;
-    attribute.format = format;
-    attribute.offset = offset;
-
-    buffers.back().attributes.push_back(attribute);
-    
-    return *this;
-}
-
-std::vector<VulkanVertexLayout> VertexLayoutBuilder::build() const {
-    return buffers;
-}
-
 Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSource& source) 
     : m_device        (device)
     , m_pushConstants (source.pushConstants)

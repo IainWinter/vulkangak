@@ -1,6 +1,8 @@
 #pragma once
 
-#include "render/backend/render_device.h"
+#include "render/backend/factory/buffer_factory.h"
+#include "render/backend/command_buffer.h"
+#include "render/vertex_layout.h"
 #include "math/random.h"
 
 #include <functional>
@@ -80,7 +82,7 @@ public:
 
     static std::vector<VulkanVertexLayout> getLayout();
 
-    ParticleMesh(RenderDevice* device, size_t batchSize);
+    ParticleMesh(BufferFactory* bufferFactory, size_t batchSize);
     ~ParticleMesh();
 
     ParticleMesh(const ParticleMesh&) = delete;
@@ -122,12 +124,12 @@ private:
 
     const int batchSize;
 
-    VertexBuffer* quadBuffer;
-    IndexBuffer*  indexBuffer;
+    Buffer* quadBuffer;
+    Buffer* indexBuffer;
+    Buffer* instanceBuffer; // For now there can only be a single batch
 
     std::vector<Instance> instances; // gpu data
     std::vector<Particle> particles; // cpu data
 
-    // For now there can only be a single batch
-    VertexBuffer* instanceBuffer;
+    BufferFactory* bufferFactory;
 };

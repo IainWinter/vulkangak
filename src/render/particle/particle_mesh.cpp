@@ -45,18 +45,19 @@ std::vector<VulkanVertexLayout> ParticleMesh::getLayout() {
         .build();
 }
 
-ParticleMesh::ParticleMesh(RenderDevice* device, size_t batchSize) 
-    : batchSize (batchSize)
+ParticleMesh::ParticleMesh(BufferFactory* bufferFactory, size_t batchSize) 
+    : batchSize     (batchSize)
+    , bufferFactory (bufferFactory)
 {
-    quadBuffer = device->newVertexBuffer<Vertex>(vertices);
-    indexBuffer = device->newIndexBuffer(indices);
-    instanceBuffer = device->newVertexBuffer(sizeof(Instance), batchSize, nullptr);
+    quadBuffer = bufferFactory->createVertexBufferFromVector<Vertex>(vertices);
+    indexBuffer = bufferFactory->createIndexBufferFromVector(indices);
+    instanceBuffer = bufferFactory->createVertexBufferEmpty(sizeof(Instance), batchSize);
 }
 
 ParticleMesh::~ParticleMesh() {
-    delete quadBuffer;
-    delete indexBuffer;
-    delete instanceBuffer;
+    bufferFactory->destroyBuffer(quadBuffer);
+    bufferFactory->destroyBuffer(indexBuffer);
+    bufferFactory->destroyBuffer(instanceBuffer);
 }
 
 void ParticleMesh::update(float deltaTime) {
@@ -103,7 +104,7 @@ void ParticleMesh::sendToDevice() {
 }
 
 void ParticleMesh::draw(CommandBuffer& cmd) {
-    VertexBuffer* buffers[2] = { quadBuffer, instanceBuffer };
+    Buffer* buffers[2] = { quadBuffer, instanceBuffer };
 
     cmd.bindVertexBuffers(2, buffers);
     cmd.bindIndexBuffer(indexBuffer);

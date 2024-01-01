@@ -2,6 +2,10 @@
 #include "vk_error.h"
 #include <unordered_map>
 
+#include "render/backend/type/platform/image_vulkan.h"
+#include "render/backend/type/platform/image_sampler_vulkan.h"
+#include "render/backend/type/platform/buffer_vulkan.h"
+
 struct Descriptor {
     VkDescriptorSetLayout layout;
     VkDescriptorSet set;
@@ -111,12 +115,15 @@ VkDescriptorSet DescriptorGroup::getSet(int frameIndex, int setIndex) {
 }
 
 void DescriptorGroup::writeImage(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler) {
+    ImageVulkan* imageVulkan = (ImageVulkan*)image;
+    ImageSamplerVulkan* samplerVulkan = (ImageSamplerVulkan*)sampler;
+    
     DescriptorBinding binding = m_bindings[bindingIndex];
 
     VkDescriptorImageInfo imageInfo{};
     imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    imageInfo.imageView = image->getView();
-    imageInfo.sampler = sampler->m_sampler;
+    imageInfo.imageView = imageVulkan->view;
+    imageInfo.sampler = samplerVulkan->sampler;
 
     VkWriteDescriptorSet write{};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -130,13 +137,15 @@ void DescriptorGroup::writeImage(int frameIndex, int bindingIndex, Image* image,
     vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }
 
-void DescriptorGroup::writeUniformBuffer(int frameIndex, int bindingIndex, UniformBuffer* uniformBuffer) {
+void DescriptorGroup::writeUniformBuffer(int frameIndex, int bindingIndex, Buffer* uniformBuffer) {
+    BufferVulkan* uniformBufferVulkan = (BufferVulkan*)uniformBuffer;
+
     DescriptorBinding binding = m_bindings[bindingIndex];
 
     VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = uniformBuffer->m_buffer;
+    bufferInfo.buffer = uniformBufferVulkan->buffer;
     bufferInfo.offset = 0;
-    bufferInfo.range = uniformBuffer->m_size;
+    bufferInfo.range = uniformBufferVulkan->bufferSize;
 
     VkWriteDescriptorSet write{};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

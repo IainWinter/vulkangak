@@ -2,17 +2,17 @@
 
 #include "window.h"
 #include "shader.h"
-#include "vertex_buffer.h"
-#include "index_buffer.h"
 #include "command_buffer.h"
-#include "image.h"
-#include "uniform_buffer.h"
 #include "descriptor_group.h"
 #include "imgui_loop.h"
 
 #include "vk_mem_alloc.h"
 
 #include <vector>
+
+#include "factory/platform/image_factory_vulkan.h"
+#include "factory/platform/image_sampler_factory_vulkan.h"
+#include "factory/platform/buffer_factory_vulkan.h"
 
 struct VulkanSwapChainImage {
     VkImage image;
@@ -52,14 +52,7 @@ public:
 
     Shader* newShader(const VulkanShaderSource& source);
     
-    VertexBuffer* newVertexBuffer(size_t vertexSize, size_t vertexCount, const void* data);
-    IndexBuffer* newIndexBuffer(const std::vector<u32>& indices);
-    UniformBuffer* newUniformBuffer(size_t size);
-    
     CommandBuffer* newCommandBuffer();
-
-    Image* newImage(const u8*  pixels, u32 width, u32 height, u32 channels);
-    ImageSampler* newImageSampler();
 
     void updateDescriptorSet(const VkWriteDescriptorSet& write);
 
@@ -81,16 +74,6 @@ public:
 
     void submitToGraphicsQueue(CommandBuffer* commandBuffer);
 
-    template<typename _vertex_t>
-    VertexBuffer* newVertexBuffer(const std::vector<_vertex_t>& vertices) {
-        return newVertexBuffer(sizeof(_vertex_t), vertices.size(), vertices.data());
-    }
-
-    template<typename _ubo_t>
-    UniformBuffer* newUniformBuffer() {
-        return newUniformBuffer(sizeof(_ubo_t));
-    }
-
 private:
     // Need a system to allocate more sets when needed
     // this prob crashes the system while running
@@ -108,6 +91,11 @@ private:
 
     // destroy, choose config, then create again
     void recreateSwapchain();
+
+public:
+    BufferFactory* bufferFactory;
+    ImageFactory* imageFactory;
+    ImageSamplerFactory* imageSamplerFactory;
 
 private:
     Window* m_window;

@@ -17,16 +17,17 @@ sources = [
     'src/render/line/line_mesh.cpp',
     'src/render/particle/particle_mesh.cpp',
 
+    'src/render/backend/factory/platform/buffer_factory_vulkan.cpp',
+    'src/render/backend/factory/platform/image_factory_vulkan.cpp',
+    'src/render/backend/factory/platform/image_sampler_factory_vulkan.cpp',
+
+    'src/render/backend/type/platform/buffer_vulkan.cpp',
+
     'src/render/backend/window.cpp',
     'src/render/backend/render_device.cpp',
     'src/render/backend/descriptor_group.cpp',
     'src/render/backend/command_buffer.cpp',
     'src/render/backend/shader.cpp',
-    'src/render/backend/image.cpp',
-    'src/render/backend/buffer.cpp',
-    'src/render/backend/vertex_buffer.cpp',
-    'src/render/backend/index_buffer.cpp',
-    'src/render/backend/uniform_buffer.cpp',
     'src/render/backend/imgui_loop.cpp',
 ]
 

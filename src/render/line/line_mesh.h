@@ -1,6 +1,13 @@
 #pragma once
 
-#include "render/backend/render_device.h"
+#include "render/backend/factory/buffer_factory.h"
+#include "render/backend/command_buffer.h"
+#include "render/backend/shader.h" // only for vertex layout builder
+
+#include "render/vertex_layout.h"
+
+#include "glm/vec2.hpp"
+#include "glm/vec3.hpp"
 
 class LineMesh {
 public:
@@ -13,7 +20,7 @@ public:
         float distanceFromStart;
     };
 
-    LineMesh(RenderDevice* device, int capResolution = 8);
+    LineMesh(BufferFactory* bufferFactory, int capResolution = 8);
     ~LineMesh();
 
     LineMesh(const LineMesh&) = delete;
@@ -31,8 +38,10 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<Point> m_points;
 
-    VertexBuffer* m_vertexBuffer;
-    VertexBuffer* m_instanceBuffer;
+    Buffer* m_vertexBuffer;
+    Buffer* m_instanceBuffer;
+
+    BufferFactory* m_bufferFactory;
 
 public:
     static std::vector<VulkanVertexLayout> getLayout();

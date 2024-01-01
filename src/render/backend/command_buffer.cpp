@@ -1,10 +1,9 @@
 #include "command_buffer.h"
 #include "vk_error.h"
 
-#include "shader.h"
-#include "vertex_buffer.h"
-#include "index_buffer.h"
+#include "render/backend/type/platform/buffer_vulkan.h"
 
+#include "shader.h"
 #include <stdexcept>
 
 // helpers
@@ -13,18 +12,6 @@ struct DrawCall {
     std::vector<VkBuffer> buffers;
     std::vector<VkDeviceSize> offsets;
 };
-
-DrawCall unrollDrawCall(const std::vector<VertexBuffer*>& vertexBuffers) {
-    std::vector<VkBuffer> buffers;
-    std::vector<VkDeviceSize> offsets;
-
-    for (VertexBuffer* vertexBuffer : vertexBuffers) {
-        buffers.push_back(vertexBuffer->m_buffer);
-        offsets.push_back(0);
-    }
-
-    return { buffers, offsets };
-}
 
 CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool commandPool) 
     : m_device      (device)
@@ -149,18 +136,21 @@ void CommandBuffer::bindDescriptorSet(Shader* shader, VkDescriptorSet descriptor
     vkCmdBindDescriptorSets(m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader->m_pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);    
 }
 
-void CommandBuffer::bindVertexBuffers(u32 count, VertexBuffer* vertexBuffers[]) {
+void CommandBuffer::bindVertexBuffers(u32 count, Buffer* vertexBuffers[]) {
     for (u32 i = 0; i < count; i++) {
-        m_vertexBuffers[i] = vertexBuffers[i]->m_buffer;
+        BufferVulkan* vertexBuffer = (BufferVulkan*)vertexBuffers[i];
+
+        m_vertexBuffers[i] = vertexBuffer->buffer;
         m_offsets[i] = 0;
     }
 
     vkCmdBindVertexBuffers(m_commandBuffer, 0, count, m_vertexBuffers, m_offsets);
 }
 
-void CommandBuffer::bindIndexBuffer(IndexBuffer* indexBuffer) {
-    // VK_INDEX_TYPE_UINT32 is leaked abstraction
-    vkCmdBindIndexBuffer(m_commandBuffer, indexBuffer->m_buffer, 0, VK_INDEX_TYPE_UINT32);
+void CommandBuffer::bindIndexBuffer(Buffer* indexBuffer) {
+    BufferVulkan* indexBufferVulkan = (BufferVulkan*)indexBuffer;
+
+    vkCmdBindIndexBuffer(m_commandBuffer, indexBufferVulkan->buffer, 0, VK_INDEX_TYPE_UINT32);
 }
 
 void CommandBuffer::draw(u32 vertexCount, u32 instanceCount) {
