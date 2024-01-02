@@ -3,7 +3,7 @@
 #include "render/backend/factory/platform/image_factory_vulkan.h"
 #include "render/backend/type/platform/buffer_vulkan.h"
 #include "render/backend/type/platform/translation_vulkan.h"
-#include "render/backend/vk_error.h"
+#include "render/backend/type/platform/vk_error.h"
 
 // remove this
 #include "render/backend/type/buffer.h"

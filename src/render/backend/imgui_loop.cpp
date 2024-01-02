@@ -4,7 +4,7 @@
 #include "imgui_impl_vulkan.h"
 #include "imgui_impl_sdl2.h"
 
-#include "render/backend/vk_error.h"
+#include "render/backend/type/platform/vk_error.h"
 #include "render/backend/type/platform/command_buffer_vulkan.h"
 
 #include <vector>

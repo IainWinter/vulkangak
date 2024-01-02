@@ -2,7 +2,7 @@
 
 #include "render/backend/factory/platform/buffer_factory_vulkan.h"
 #include "render/backend/type/platform/translation_vulkan.h"
-#include "render/backend/vk_error.h"
+#include "render/backend/type/platform/vk_error.h"
 
 BufferFactoryVulkan::BufferFactoryVulkan(VkDevice logicalDevice, VmaAllocator allocator) 
     : m_logicalDevice (logicalDevice)

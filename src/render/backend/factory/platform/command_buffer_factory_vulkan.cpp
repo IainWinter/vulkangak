@@ -2,7 +2,7 @@
 
 #include "render/backend/factory/platform/command_buffer_factory_vulkan.h"
 #include "render/backend/type/platform/command_buffer_vulkan.h"
-#include "render/backend/vk_error.h"
+#include "render/backend/type/platform/vk_error.h"
 
 CommandBufferFactoryVulkan::CommandBufferFactoryVulkan(VkDevice logicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue) 
     : m_logicalDevice (logicalDevice) 

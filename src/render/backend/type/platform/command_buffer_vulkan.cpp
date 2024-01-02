@@ -6,7 +6,7 @@
 #include "render/backend/type/platform/image_vulkan.h"
 #include "render/backend/type/platform/shader_vulkan.h"
 #include "render/backend/type/platform/translation_vulkan.h"
-#include "render/backend/vk_error.h"
+#include "render/backend/type/platform/vk_error.h"
 
 void CommandBufferVulkan::begin() {
     VkCommandBufferBeginInfo beginInfo{};

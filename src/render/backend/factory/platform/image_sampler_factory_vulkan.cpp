@@ -1,7 +1,7 @@
 #pragma once
 
 #include "render/backend/factory/platform/image_sampler_factory_vulkan.h"
-#include "render/backend/vk_error.h"
+#include "render/backend/type/platform/vk_error.h"
 
 ImageSamplerFactoryVulkan::ImageSamplerFactoryVulkan(VkDevice logicalDevice) 
     : m_logicalDevice (logicalDevice) 

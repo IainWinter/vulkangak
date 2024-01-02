@@ -342,7 +342,6 @@ private:
     ParticleMesh* m_particleMesh;
     Shader* m_particleShader;
 
-    //std::vector<Arc*> m_arcs;
     std::vector<Orbital*> m_orbitals;
     Shader* m_lineShader;
     
@@ -351,6 +350,5 @@ private:
     Image* m_image;
     ImageSampler* m_imageSampler;
 
-    // either give full access to this or put it in the update
     RenderDevice* m_device;
 };
