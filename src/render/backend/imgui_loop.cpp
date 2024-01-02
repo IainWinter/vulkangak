@@ -5,7 +5,7 @@
 #include "imgui_impl_sdl2.h"
 
 #include "render/backend/vk_error.h"
-#include "render/backend/command_buffer.h"
+#include "render/backend/type/platform/command_buffer_vulkan.h"
 
 #include <vector>
 
@@ -18,7 +18,8 @@ ImGuiLoop::ImGuiLoop(
         VkCommandPool commandPool,
         VkQueue graphicsQueue,
         u32 graphicsQueueFamily,
-        u32 swapchainImageCount
+        u32 swapchainImageCount,
+        CommandBufferFactory* commandBufferFactory
 )
     : m_window (window)
     , m_device (logicalDevice)
@@ -31,6 +32,7 @@ ImGuiLoop::ImGuiLoop(
     
     err(ImGui_ImplSDL2_InitForVulkan(window->m_sdlWindow));
 
+    // oversized
     std::vector<VkDescriptorPoolSize> poolSizes = {
         { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -70,11 +72,13 @@ ImGuiLoop::ImGuiLoop(
     err(ImGui_ImplVulkan_Init(&init_info, renderPass));
 
     {
-        CommandBuffer cmd = CommandBuffer(logicalDevice, commandPool);   
-        cmd.begin();
-        ImGui_ImplVulkan_CreateFontsTexture(cmd.m_commandBuffer);
-        cmd.end();
-        cmd.submit(graphicsQueue);
+        CommandBufferVulkan* cmd = (CommandBufferVulkan*)commandBufferFactory->createCommandBuffer();
+        cmd->begin();
+        ImGui_ImplVulkan_CreateFontsTexture(cmd->commandBuffer);
+        cmd->end();
+        cmd->submit();
+
+        commandBufferFactory->destroyCommandBuffer(cmd);
     }
 
     window->addEventListener([](SDL_Event event) {
@@ -96,9 +100,11 @@ void ImGuiLoop::beginFrame() {
     ImGui::NewFrame();
 }
 
-void ImGuiLoop::submitFrame(VkCommandBuffer commandBuffer) {
+void ImGuiLoop::submitFrame(CommandBuffer* commandBuffer) {
+    CommandBufferVulkan* vkCommandBuffer = (CommandBufferVulkan*)commandBuffer;
+
 	ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCommandBuffer->commandBuffer);
 
 // #ifdef _WIN32
 // 		ImGui::UpdatePlatformWindows();

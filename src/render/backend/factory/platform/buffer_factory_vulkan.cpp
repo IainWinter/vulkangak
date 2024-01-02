@@ -1,14 +1,8 @@
 #pragma once
 
 #include "render/backend/factory/platform/buffer_factory_vulkan.h"
+#include "render/backend/type/platform/translation_vulkan.h"
 #include "render/backend/vk_error.h"
-
-static VkBufferUsageFlagBits s_bufferTypeMap[] = {
-    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-};
 
 BufferFactoryVulkan::BufferFactoryVulkan(VkDevice logicalDevice, VmaAllocator allocator) 
     : m_logicalDevice (logicalDevice)
@@ -16,10 +10,11 @@ BufferFactoryVulkan::BufferFactoryVulkan(VkDevice logicalDevice, VmaAllocator al
 {}
 
 BufferFactoryVulkan::~BufferFactoryVulkan() {
+    
 }
 
 Buffer* BufferFactoryVulkan::createBufferEmpty(BufferType type, size_t size) {
-    VkBufferUsageFlagBits vkBufferType = s_bufferTypeMap[type];
+    VkBufferUsageFlagBits vkBufferType = bufferTypeMapVulkan(type);
     VmaAllocationCreateFlags vkMemoryType = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
     
     VkBufferCreateInfo bufferInfo{};

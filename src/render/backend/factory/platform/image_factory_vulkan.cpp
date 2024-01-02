@@ -2,42 +2,19 @@
 
 #include "render/backend/factory/platform/image_factory_vulkan.h"
 #include "render/backend/type/platform/buffer_vulkan.h"
+#include "render/backend/type/platform/translation_vulkan.h"
 #include "render/backend/vk_error.h"
 
 // remove this
 #include "render/backend/type/buffer.h"
-#include "render/backend/command_buffer.h"
 
-
-struct VulkanImageFormat {
-    size_t pixelSize;
-    size_t elementSize;
-    VkFormat format;
-};
-
-static VulkanImageFormat s_imageFormatMap[] = {
-    { 8, 24, VK_FORMAT_R8G8B8_SRGB },
-    { 8, 24, VK_FORMAT_R8G8B8_UNORM },
-    { 8, 32, VK_FORMAT_R8G8B8A8_SRGB },
-    { 8, 32, VK_FORMAT_R8G8B8A8_UNORM }
-};
-
-static VkSampleCountFlagBits s_imageSampleCountMap[] = {
-    VK_SAMPLE_COUNT_1_BIT,
-    VK_SAMPLE_COUNT_2_BIT,
-    VK_SAMPLE_COUNT_4_BIT,
-    VK_SAMPLE_COUNT_8_BIT,
-    VK_SAMPLE_COUNT_16_BIT,
-    VK_SAMPLE_COUNT_32_BIT,
-    VK_SAMPLE_COUNT_64_BIT
-};
-
-ImageFactoryVulkan::ImageFactoryVulkan(VkDevice logicalDevice, VmaAllocator allocator, VkCommandPool commandPool, VkQueue graphicsQueue, BufferFactory* bufferFactory) 
-    : m_allocator     (allocator)
-    , m_logicalDevice (logicalDevice)
-    , m_commandPool   (commandPool)
-    , m_graphicsQueue (graphicsQueue)
-    , m_bufferFactory (bufferFactory)
+ImageFactoryVulkan::ImageFactoryVulkan(VkDevice logicalDevice, VmaAllocator allocator, VkCommandPool commandPool, VkQueue graphicsQueue, BufferFactory* bufferFactory, CommandBufferFactory* commandBufferFactory) 
+    : m_allocator            (allocator)
+    , m_logicalDevice        (logicalDevice)
+    , m_commandPool          (commandPool)
+    , m_graphicsQueue        (graphicsQueue)
+    , m_bufferFactory        (bufferFactory)
+    , m_commandBufferFactory (commandBufferFactory)
 {}
 
 ImageFactoryVulkan::~ImageFactoryVulkan() {
@@ -57,27 +34,30 @@ Image* ImageFactoryVulkan::createImage2D(u32 width, u32 height, ImageFormat form
     BufferVulkan* transferBuffer = (BufferVulkan*)m_bufferFactory->createBuffer(BufferType_TransferSource, image->imageBufferSize, pixels);
 
     {
-        CommandBuffer cmdBuffer = CommandBuffer(m_logicalDevice, m_commandPool);
-        cmdBuffer.begin();
-        cmdBuffer.transitionImageFormat(image->image, image->format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        cmdBuffer.end();
-        cmdBuffer.submit(m_graphicsQueue);
+        CommandBuffer* cmd = m_commandBufferFactory->createCommandBuffer();
+        cmd->begin();
+        cmd->transitionImageFormat(image, ImageLayout_Undefined, ImageLayout_TransferDestination);
+        cmd->end();
+        cmd->submit();
+        m_commandBufferFactory->destroyCommandBuffer(cmd);
     }
 
     {
-        CommandBuffer cmdBuffer = CommandBuffer(m_logicalDevice, m_commandPool);
-        cmdBuffer.begin();
-        cmdBuffer.copyBufferToImage(transferBuffer->buffer, image->image, width, height);
-        cmdBuffer.end();
-        cmdBuffer.submit(m_graphicsQueue);
+        CommandBuffer* cmd = m_commandBufferFactory->createCommandBuffer();
+        cmd->begin();
+        cmd->copyBufferToImage(transferBuffer, image, width, height);
+        cmd->end();
+        cmd->submit();
+        m_commandBufferFactory->destroyCommandBuffer(cmd);
     }
 
     {
-        CommandBuffer cmdBuffer = CommandBuffer(m_logicalDevice, m_commandPool);
-        cmdBuffer.begin();
-        cmdBuffer.transitionImageFormat(image->image, image->format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        cmdBuffer.end();
-        cmdBuffer.submit(m_graphicsQueue);
+        CommandBuffer* cmd = m_commandBufferFactory->createCommandBuffer();
+        cmd->begin();
+        cmd->transitionImageFormat(image, ImageLayout_TransferDestination, ImageLayout_ShaderReadOnly);
+        cmd->end();
+        cmd->submit();
+        m_commandBufferFactory->destroyCommandBuffer(cmd);
     }
 
     m_bufferFactory->destroyBuffer(transferBuffer);
@@ -124,8 +104,8 @@ void ImageFactoryVulkan::destroyImage(Image* image) {
 }
 
 ImageVulkan* ImageFactoryVulkan::createImageVulkan2D(u32 width, u32 height, ImageFormat format, ImageSampleCount sampleCount) {
-    VulkanImageFormat vkFormat = s_imageFormatMap[(int)format];
-    VkSampleCountFlagBits vkSampleCount = s_imageSampleCountMap[sampleCount];
+    VulkanImageFormat vkFormat = imageFormatMapVulkan(format);
+    VkSampleCountFlagBits vkSampleCount = imageSampleCountMapVulkan(sampleCount);
 
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

@@ -127,44 +127,51 @@ public:
         // Store separate pools for each frame in flight so they can be reallocated when needed, this should only really
         // happen on a scene change, so its ok pause for stall for a few frames
 
-        DescriptorBinding textureLayout;
-        textureLayout.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        textureLayout.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-        textureLayout.arrayElementCount = 1;
-        textureLayout.bindingLocation = 0;
-        textureLayout.bindingSetLocation = 0;
+        DescriptorSetLayout setLayout = {
+            .bindings = {
+                {
+                    .stageBits = ShaderStage_Fragment,
+                    .type = DescriptorType_ImageSampler,
+                    .elementCount = 1,
+                    .location = 0,
+                },
+                {
+                    .stageBits = ShaderStage_Vertex,
+                    .type = DescriptorType_UniformBuffer,
+                    .elementCount = 1,
+                    .location = 1,
+                }
+            }
+        };
 
-        DescriptorBinding uboLayout;
-        uboLayout.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayout.stages = VK_SHADER_STAGE_VERTEX_BIT;
-        uboLayout.arrayElementCount = 1;
-        uboLayout.bindingLocation = 1;
-        uboLayout.bindingSetLocation = 0;
-
-        m_descriptor = device->newDescriptorGroup({ textureLayout, uboLayout });
+        m_descriptor = device->descriptorSetFactory->createDescriptorSet(setLayout);
 
         // Create particle shader
 
-        VulkanShaderSource particleShaderSource;
-        particleShaderSource.vertex = package["particle.vert"].binary;
-        particleShaderSource.fragment = package["particle.frag"].binary;
-        particleShaderSource.pushConstants = {{ VK_SHADER_STAGE_VERTEX_BIT, sizeof(mat4) }};
-        particleShaderSource.descriptorSetLayouts = { m_descriptor->getLayout(0) };
-        particleShaderSource.vertexInputs = ParticleMesh::getLayout();
+        ShaderProgramSource particleProgramSource;
+        particleProgramSource.vertexLayout = ParticleMesh::getLayout();
+        particleProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(mat4) }};
+        particleProgramSource.descriptorSets = { m_descriptor };
+        particleProgramSource.shaders = {
+            { ShaderStage_Vertex, package["particle.vert"].binary },
+            { ShaderStage_Fragment, package["particle.frag"].binary }
+        };
 
-        m_particleShader = device->newShader(particleShaderSource);
+        m_particleShader = device->shaderFactory->createShader(particleProgramSource);
         m_particleMesh = new ParticleMesh(device->bufferFactory, 13000);
 
         // Create line shader
 
-        VulkanShaderSource lineShaderSource;
-        lineShaderSource.vertex = package["line.vert"].binary;
-        lineShaderSource.fragment = package["line.frag"].binary;
-        lineShaderSource.pushConstants = {{ VK_SHADER_STAGE_VERTEX_BIT, sizeof(LineShaderPushConstants) }};
-        lineShaderSource.descriptorSetLayouts = { m_descriptor->getLayout(0) };
-        lineShaderSource.vertexInputs = LineMesh::getLayout();
+        ShaderProgramSource lineProgramSource;
+        lineProgramSource.vertexLayout = LineMesh::getLayout();
+        lineProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(LineShaderPushConstants) }};
+        lineProgramSource.descriptorSets = { m_descriptor };
+        lineProgramSource.shaders = {
+            { ShaderStage_Vertex, package["line.vert"].binary },
+            { ShaderStage_Fragment, package["line.frag"].binary }
+        };
 
-        m_lineShader = device->newShader(lineShaderSource);
+        m_lineShader = device->shaderFactory->createShader(lineProgramSource);
 
         // Camera
 
@@ -271,13 +278,13 @@ public:
 
         cmd.setShader(m_particleShader);
         cmd.pushConstant(m_particleShader, 0, &model);
-        cmd.bindDescriptorSet(m_particleShader, m_descriptor->getSet(0));
+        cmd.bindDescriptorSet(m_particleShader, m_descriptor, frame.frameIndex);
 
         m_particleMesh->sendToDevice();
         m_particleMesh->draw(cmd);
 
         cmd.setShader(m_lineShader);
-        cmd.bindDescriptorSet(m_lineShader, m_descriptor->getSet(0));
+        cmd.bindDescriptorSet(m_lineShader, m_descriptor, frame.frameIndex);
 
         LineShaderPushConstants linePush{};
         linePush.model = model;
@@ -301,10 +308,10 @@ public:
             }
             ImGui::End();
         }
-        imgui->submitFrame(cmd.m_commandBuffer);
+        imgui->submitFrame(frame.commandBuffer);
 
-        vkCmdEndRenderPass(cmd.m_commandBuffer);
-        vkEndCommandBuffer(cmd.m_commandBuffer);
+        cmd.endRenderPass();
+        cmd.end();
 
         device->submitFrame();
     }
@@ -320,11 +327,12 @@ public:
         device->bufferFactory->destroyBuffer(m_cameraUBO);
         device->imageFactory->destroyImage(m_image);
         device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
+        device->descriptorSetFactory->destroyDescriptorSet(m_descriptor);
 
-        delete m_lineShader;
+        device->shaderFactory->destroyShader(m_particleShader);
+        device->shaderFactory->destroyShader(m_lineShader);
+
         delete m_particleMesh;
-        delete m_particleShader;
-        delete m_descriptor;
     }
 
 private:
@@ -338,8 +346,8 @@ private:
     //std::vector<Arc*> m_arcs;
     std::vector<Orbital*> m_orbitals;
     Shader* m_lineShader;
-
-    DescriptorGroup* m_descriptor;
+    
+    DescriptorSet* m_descriptor;
 
     Image* m_image;
     ImageSampler* m_imageSampler;

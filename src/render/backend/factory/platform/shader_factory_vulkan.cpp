@@ -1,12 +1,18 @@
-#include "shader.h"
-#include "vk_error.h"
+#include "render/backend/factory/platform/shader_factory_vulkan.h"
+#include "render/backend/type/platform/descriptor_set_vulkan.h"
+#include "render/backend/type/platform/translation_vulkan.h"
+#include "render/backend/vk_error.h"
 
-#include <stdexcept>
 
-Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSource& source) 
-    : m_device        (device)
-    , m_pushConstants (source.pushConstants)
-{
+ShaderFactoryVulkan::ShaderFactoryVulkan(VkDevice logicalDevice, VkRenderPass renderPass) 
+    : m_logicalDevice (logicalDevice)
+    , m_renderPass    (renderPass)
+{}
+
+ShaderFactoryVulkan::~ShaderFactoryVulkan() {
+}
+
+Shader* ShaderFactoryVulkan::createShader(const ShaderProgramSource& source) {
     // Assembly, this defines the type of primitive to draw
 
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyInfo{};
@@ -17,19 +23,35 @@ Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSourc
     // Vertex input, this defines the vertex format and how to combine multiple vertex buffers together
 
     // Need to unroll the vertex input layouts
-    std::vector<VkVertexInputBindingDescription> bindings;
-    std::vector<VkVertexInputAttributeDescription> attributes;
-    for (const VulkanVertexLayout& vertexLayout : source.vertexInputs) {
-        bindings.push_back(vertexLayout.description);
-        attributes.insert(attributes.end(), vertexLayout.attributes.begin(), vertexLayout.attributes.end());
+    std::vector<VkVertexInputBindingDescription> vkBindings;
+    std::vector<VkVertexInputAttributeDescription> vkAttributes;
+    for (const VertexLayout::Buffer& vertexBufferLayout : source.vertexLayout.buffers) {
+        VkVertexInputBindingDescription bufferBinding{};
+        bufferBinding.binding = vertexBufferLayout.binding;
+        bufferBinding.stride = vertexBufferLayout.stride;
+        bufferBinding.inputRate = vertexBufferLayout.instanced 
+            ? VK_VERTEX_INPUT_RATE_INSTANCE 
+            : VK_VERTEX_INPUT_RATE_VERTEX;
+
+        vkBindings.push_back(bufferBinding);
+
+        for (const VertexLayout::Buffer::Attribute& attribute : vertexBufferLayout.attributes) {
+            VkVertexInputAttributeDescription vkAttribute{};
+            vkAttribute.binding = vertexBufferLayout.binding;
+            vkAttribute.location = attribute.location;
+            vkAttribute.format = attributeFormatMapVulkan(attribute.format);
+            vkAttribute.offset = attribute.offset;
+
+            vkAttributes.push_back(vkAttribute);
+        }
     }
 
     VkPipelineVertexInputStateCreateInfo pipelineVertexInputInfo{};
     pipelineVertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    pipelineVertexInputInfo.vertexBindingDescriptionCount = (u32)bindings.size();
-    pipelineVertexInputInfo.pVertexBindingDescriptions = bindings.data();
-    pipelineVertexInputInfo.vertexAttributeDescriptionCount = (u32)attributes.size();
-    pipelineVertexInputInfo.pVertexAttributeDescriptions = attributes.data();
+    pipelineVertexInputInfo.vertexBindingDescriptionCount = (u32)vkBindings.size();
+    pipelineVertexInputInfo.pVertexBindingDescriptions = vkBindings.data();
+    pipelineVertexInputInfo.vertexAttributeDescriptionCount = (u32)vkAttributes.size();
+    pipelineVertexInputInfo.pVertexAttributeDescriptions = vkAttributes.data();
 
     std::vector<VkDynamicState> pipelineDynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
@@ -91,64 +113,63 @@ Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSourc
     pipelineColorBlending.attachmentCount = 1;
     pipelineColorBlending.pAttachments = &pipelineColorBlendAttachmentInfo;
 
-    std::vector<VkPushConstantRange> pushConstants;
-    pushConstants.reserve(source.pushConstants.size());
+    std::vector<VkPushConstantRange> vkPushConstants;
+    vkPushConstants.reserve(source.pushConstants.size());
 
-    for (const VulkanPushConstant& pushConstant : source.pushConstants) {
+    for (const ShaderProgramSource::PushConstant& pushConstant : source.pushConstants) {
         VkPushConstantRange range{};
-        range.stageFlags = pushConstant.stages;
+        range.stageFlags = shaderStageFlagMapVulkan(pushConstant.stageBits);
         range.size = pushConstant.size;
-        range.offset = 0; 
+        range.offset = 0;
 
-        pushConstants.push_back(range);
+        vkPushConstants.push_back(range);
+    }
+
+    std::vector<VkDescriptorSetLayout> vkDescriptorSetLayouts;
+    vkDescriptorSetLayouts.reserve(source.descriptorSets.size());
+
+    for (const DescriptorSet* set : source.descriptorSets) {
+        DescriptorSetVulkan* vkSet = (DescriptorSetVulkan*)set;
+        vkDescriptorSetLayouts.push_back(vkSet->layout);
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.pushConstantRangeCount = (u32)pushConstants.size();
-    pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
-    pipelineLayoutInfo.setLayoutCount = (u32)source.descriptorSetLayouts.size();
-    pipelineLayoutInfo.pSetLayouts = source.descriptorSetLayouts.data();
+    pipelineLayoutInfo.pushConstantRangeCount = (u32)vkPushConstants.size();
+    pipelineLayoutInfo.pPushConstantRanges = vkPushConstants.data();
+    pipelineLayoutInfo.setLayoutCount = (u32)vkDescriptorSetLayouts.size();
+    pipelineLayoutInfo.pSetLayouts = vkDescriptorSetLayouts.data();
 
-    vk(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout));
+    VkPipelineLayout vkPipelineLayout;
+    vk(vkCreatePipelineLayout(m_logicalDevice, &pipelineLayoutInfo, nullptr, &vkPipelineLayout));
 
     //  Create the pipeline
 
-    VkShaderModuleCreateInfo shaderInfo{};
-    shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderInfo.codeSize = source.vertex.size();
-    shaderInfo.pCode = (u32*)source.vertex.data();
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    shaderStages.reserve(source.shaders.size());
 
-    VkShaderModule vertexModule;
-    vk(vkCreateShaderModule(device, &shaderInfo, nullptr, &vertexModule));
+    for (const ShaderProgramSource::ShaderSource& shaderSource : source.shaders) {
+        VkShaderModuleCreateInfo shaderInfo{};
+        shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        shaderInfo.codeSize = shaderSource.source.size();
+        shaderInfo.pCode = (u32*)shaderSource.source.data();
 
-    // should rename
-    shaderInfo = {};
-    shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderInfo.codeSize = source.fragment.size();
-    shaderInfo.pCode = (u32*)source.fragment.data();
+        VkShaderModule vkModule;
+        vk(vkCreateShaderModule(m_logicalDevice, &shaderInfo, nullptr, &vkModule));    
 
-    VkShaderModule fragmentModule;
-    vk(vkCreateShaderModule(device, &shaderInfo, nullptr, &fragmentModule));
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = shaderStageFlagMapVulkan(shaderSource.stageBit);
+        vertShaderStageInfo.module = vkModule;
+        vertShaderStageInfo.pName = "main";
 
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = vertexModule;
-    vertShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragmentModule;
-    fragShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+        shaderStages.push_back(vertShaderStageInfo);
+    }
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.stageCount = (u32)shaderStages.size();
+    pipelineInfo.pStages = shaderStages.data();
     pipelineInfo.pVertexInputState = &pipelineVertexInputInfo;
     pipelineInfo.pInputAssemblyState = &pipelineInputAssemblyInfo;
     pipelineInfo.pViewportState = &pipelineViewportStateInfo;
@@ -156,21 +177,29 @@ Shader::Shader(VkDevice device, VkRenderPass renderPass, const VulkanShaderSourc
     pipelineInfo.pMultisampleState = &pipelineMultisampleInfo;
     pipelineInfo.pColorBlendState = &pipelineColorBlending;
     pipelineInfo.pDynamicState = &pipelineDynamicStateInfo;
-    pipelineInfo.layout = m_pipelineLayout;
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.layout = vkPipelineLayout;
+    pipelineInfo.renderPass = m_renderPass;
     pipelineInfo.subpass = 0;
 
-    vk(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline));
+    VkPipeline vkPipeline;
+    vk(vkCreateGraphicsPipelines(m_logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkPipeline));
 
-    vkDestroyShaderModule(device, vertexModule, nullptr);
-    vkDestroyShaderModule(device, fragmentModule, nullptr);
+    for (const VkPipelineShaderStageCreateInfo& shaderStage : shaderStages) {
+        vkDestroyShaderModule(m_logicalDevice, shaderStage.module, nullptr);
+    }
+
+    ShaderVulkan* shader = new ShaderVulkan();
+    shader->pipeline = vkPipeline;
+    shader->pipelineLayout = vkPipelineLayout;
+    shader->pushConstants = vkPushConstants;
+
+    return shader;
 }
 
-Shader::~Shader() {
-    vkDestroyPipeline(m_device, m_pipeline, nullptr);
-    vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
-}
+void ShaderFactoryVulkan::destroyShader(Shader* shader) {
+    ShaderVulkan* shaderVulkan = (ShaderVulkan*)shader;
 
-VulkanPushConstant Shader::getPushConstant(u32 index) { 
-    return m_pushConstants.at(index);
+    vkDestroyPipeline(m_logicalDevice, shaderVulkan->pipeline, nullptr);
+    vkDestroyPipelineLayout(m_logicalDevice, shaderVulkan->pipelineLayout, nullptr);
+    delete shader;
 }

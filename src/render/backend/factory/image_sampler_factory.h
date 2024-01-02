@@ -1,8 +1,7 @@
 #pragma once
 
-#include "typedef.h"
-
 #include "render/backend/type/image_sampler.h"
+#include "typedef.h"
 
 class ImageSamplerFactory {
 public:

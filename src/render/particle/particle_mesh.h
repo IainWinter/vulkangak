@@ -1,8 +1,7 @@
 #pragma once
 
 #include "render/backend/factory/buffer_factory.h"
-#include "render/backend/command_buffer.h"
-#include "render/vertex_layout.h"
+#include "render/backend/type/command_buffer.h"
 #include "math/random.h"
 
 #include <functional>
@@ -80,7 +79,7 @@ public:
 
     using Instance = Particle::Instance;
 
-    static std::vector<VulkanVertexLayout> getLayout();
+    static VertexLayout getLayout();
 
     ParticleMesh(BufferFactory* bufferFactory, size_t batchSize);
     ~ParticleMesh();

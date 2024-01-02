@@ -14,6 +14,8 @@
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
+#include "render/backend/type/platform/command_buffer_vulkan.h"
+
 struct VulkanSwapChainAvailableConfigs {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
@@ -336,18 +338,35 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
 
     vk(vkCreateCommandPool(m_logicalDevice, &commandPoolInfo, nullptr, &m_commandPool));
 
+    // Create factories
+
+    VmaAllocatorCreateInfo allocatorInfo{};
+    allocatorInfo.instance = m_instance;
+    allocatorInfo.physicalDevice = m_physicalDevice;
+    allocatorInfo.device = m_logicalDevice;
+
+    vk(vmaCreateAllocator(&allocatorInfo, &m_allocator));
+
+    // factories
+
+    DescriptorPoolLayout descriptorPoolLayout{};
+    descriptorPoolLayout.maxSetCount = 1;
+    descriptorPoolLayout.pools = {
+        { DescriptorType_UniformBuffer, 1 },
+        { DescriptorType_ImageSampler, 1 }
+    };
+
+    bufferFactory = new BufferFactoryVulkan(m_logicalDevice, m_allocator);
+    commandBufferFactory = new CommandBufferFactoryVulkan(m_logicalDevice, m_commandPool, m_graphicsQueue);
+    descriptorSetFactory = new DescriptorSetFactoryVulkan(m_logicalDevice, descriptorPoolLayout, getFrameSyncInfo());
+    imageFactory = new ImageFactoryVulkan(m_logicalDevice, m_allocator, m_commandPool, m_graphicsQueue, bufferFactory, commandBufferFactory);
+    imageSamplerFactory = new ImageSamplerFactoryVulkan(m_logicalDevice);
+    shaderFactory = new ShaderFactoryVulkan(m_logicalDevice, m_renderPass);
+
     // Create frames in flight
 
     for (u32 i = 0; i < m_framesInFlight; i++) {
-        CommandBuffer* commandBuffer = new CommandBuffer(m_logicalDevice, m_commandPool);
-
-        // VkCommandBufferAllocateInfo commandBufferAllocInfo{};
-        // commandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        // commandBufferAllocInfo.commandPool = m_commandPool;
-        // commandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        // commandBufferAllocInfo.commandBufferCount = 1;
-        // VkCommandBuffer commandBuffer;
-        // vk(vkAllocateCommandBuffers(m_logicalDevice, &commandBufferAllocInfo, &commandBuffer));
+        CommandBuffer* commandBuffer = commandBufferFactory->createCommandBuffer();
 
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -373,19 +392,6 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
 
         m_frames.push_back(frame);
     }
-
-    VmaAllocatorCreateInfo allocatorInfo{};
-    allocatorInfo.instance = m_instance;
-    allocatorInfo.physicalDevice = m_physicalDevice;
-    allocatorInfo.device = m_logicalDevice;
-
-    vk(vmaCreateAllocator(&allocatorInfo, &m_allocator));
-
-    // factories
-
-    bufferFactory = new BufferFactoryVulkan(m_logicalDevice, m_allocator);
-    imageFactory = new ImageFactoryVulkan(m_logicalDevice, m_allocator, m_commandPool, m_graphicsQueue, bufferFactory);
-    imageSamplerFactory = new ImageSamplerFactoryVulkan(m_logicalDevice);
 }
 
 RenderDevice::~RenderDevice() {
@@ -654,21 +660,9 @@ ImGuiLoop* RenderDevice::newImGuiLoop() {
         m_commandPool,
         m_graphicsQueue,
         m_graphicsQueueIndex,
-        m_minImageCount
+        m_minImageCount,
+        commandBufferFactory
     );
-}
-
-DescriptorGroup* RenderDevice::newDescriptorGroup(const std::vector<DescriptorBinding>& descriptors) {
-    FrameSyncInfo frame = getFrameSyncInfo();
-    return new DescriptorGroup(m_logicalDevice, frame, descriptors);
-}
-
-Shader* RenderDevice::newShader(const VulkanShaderSource& source) {
-    return new Shader(m_logicalDevice, m_renderPass, source);
-}
-
-CommandBuffer* RenderDevice::newCommandBuffer() {
-    return new CommandBuffer(m_logicalDevice, m_commandPool);
 }
 
 void RenderDevice::updateDescriptorSet(const VkWriteDescriptorSet& write) {
@@ -697,13 +691,15 @@ bool RenderDevice::waitBeginFrame(VulkanFrameImage* pFrame) {
         }
     }
 
+    VkCommandBuffer commandBuffer = static_cast<CommandBufferVulkan*>(frame.commandBuffer)->commandBuffer;
+
     vk(vkResetFences(m_logicalDevice, 1, &frame.inFlightFence));
-    vk(vkResetCommandBuffer(frame.commandBuffer->m_commandBuffer, 0));
+    vk(vkResetCommandBuffer(commandBuffer, 0));
 
     VkCommandBufferBeginInfo commandBufferBeginInfo{};
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    vk(vkBeginCommandBuffer(frame.commandBuffer->m_commandBuffer, &commandBufferBeginInfo));
+    vk(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
     pFrame->commandBuffer = frame.commandBuffer;
     pFrame->width = m_extent.width;
@@ -716,6 +712,7 @@ bool RenderDevice::waitBeginFrame(VulkanFrameImage* pFrame) {
 
 void RenderDevice::submitFrame() {
     VulkanFrame frame = m_frames[m_currentFrameIndex];
+    VkCommandBuffer commandBuffer = static_cast<CommandBufferVulkan*>(frame.commandBuffer)->commandBuffer;
 
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     VkSemaphore waitSemaphores[] = { frame.imageAvailableSemaphore };
@@ -729,7 +726,7 @@ void RenderDevice::submitFrame() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &frame.commandBuffer->m_commandBuffer;
+    submitInfo.pCommandBuffers = &commandBuffer;
 
     vk(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, frame.inFlightFence));
 
@@ -753,6 +750,7 @@ void RenderDevice::submitFrame() {
 void RenderDevice::beginScreenRenderPass() {
     VulkanFrame frame = m_frames[m_currentFrameIndex];
     VulkanSwapChainImage image = m_images[m_currentImageIndex];
+    VkCommandBuffer commandBuffer = static_cast<CommandBufferVulkan*>(frame.commandBuffer)->commandBuffer;
 
     VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
 
@@ -765,7 +763,7 @@ void RenderDevice::beginScreenRenderPass() {
     renderPassBeginInfo.clearValueCount = 1;
     renderPassBeginInfo.pClearValues = &clearColor;
 
-    vkCmdBeginRenderPass(frame.commandBuffer->m_commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     VkViewport pipelineViewport{};
     pipelineViewport.x = 0.0f;
@@ -779,8 +777,8 @@ void RenderDevice::beginScreenRenderPass() {
     pipelineScissor.offset = { 0, 0 };
     pipelineScissor.extent = m_extent;
     
-    vkCmdSetViewport(frame.commandBuffer->m_commandBuffer, 0, 1, &pipelineViewport);
-    vkCmdSetScissor(frame.commandBuffer->m_commandBuffer, 0, 1, &pipelineScissor);
+    vkCmdSetViewport(commandBuffer, 0, 1, &pipelineViewport);
+    vkCmdSetScissor(commandBuffer, 0, 1, &pipelineScissor);
 }
 
 void RenderDevice::waitUntilIdle() {
@@ -789,8 +787,4 @@ void RenderDevice::waitUntilIdle() {
 
 void RenderDevice::waitUntilGraphicsQueueIdle() {
     vk(vkQueueWaitIdle(m_graphicsQueue));
-}
-
-void RenderDevice::submitToGraphicsQueue(CommandBuffer* commandBuffer) {
-    commandBuffer->submit(m_graphicsQueue);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "render/backend/factory/command_buffer_factory.h"
+
 #include "typedef.h"
 #include "vulkan/vulkan.h"
 
@@ -16,7 +18,9 @@ public:
         VkCommandPool commandPool,
         VkQueue graphicsQueue,
         u32 graphicsQueueFamily,
-        u32 swapchainImageCount
+        u32 swapchainImageCount,
+
+        CommandBufferFactory* commandBufferFactory
     );
 
     ~ImGuiLoop();
@@ -25,7 +29,7 @@ public:
     ImGuiLoop& operator=(const ImGuiLoop&) = delete;
 
     void beginFrame();
-    void submitFrame(VkCommandBuffer commandBuffer);
+    void submitFrame(CommandBuffer* commandBuffer);
 
 private:
     Window* m_window;

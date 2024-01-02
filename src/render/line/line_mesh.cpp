@@ -104,14 +104,50 @@ std::vector<LineMesh::Point>& LineMesh::points() {
     return m_points;
 }
 
-std::vector<VulkanVertexLayout> LineMesh::getLayout() {
-    return VertexLayoutBuilder()
-        .buffer(sizeof(Vertex), false)
-            .attribute(0, offsetof(Vertex, pos), VK_FORMAT_R32G32B32_SFLOAT)
-        .buffer(sizeof(Point), true)
-            .attribute(1, offsetof(Point, point),                             VK_FORMAT_R32G32_SFLOAT)
-            .attribute(2, offsetof(Point, distanceFromStart),                 VK_FORMAT_R32_SFLOAT)
-            .attribute(3, sizeof(Point) + offsetof(Point, point),             VK_FORMAT_R32G32_SFLOAT)
-            .attribute(4, sizeof(Point) + offsetof(Point, distanceFromStart), VK_FORMAT_R32_SFLOAT)
-        .build();
+VertexLayout LineMesh::getLayout() {
+    VertexLayout vertexLayout = {
+        .buffers = {
+            {
+                .binding = 0,
+                .stride = sizeof(Vertex),
+                .instanced = false,
+                .attributes = {
+                    {
+                        .location = 0,
+                        .offset = offsetof(Vertex, pos),
+                        .format = AttributeFormat_Float3
+                    }                    
+                }
+            },
+            {
+                .binding = 1,
+                .stride = sizeof(Point),
+                .instanced = true,
+                .attributes = {
+                    {
+                        .location = 1,
+                        .offset = offsetof(Point, point),
+                        .format = AttributeFormat_Float2
+                    },
+                    {
+                        .location = 2,
+                        .offset = offsetof(Point, distanceFromStart),
+                        .format = AttributeFormat_Float
+                    },
+                    {
+                        .location = 3,
+                        .offset = sizeof(Point) + offsetof(Point, point),
+                        .format = AttributeFormat_Float2
+                    },
+                    {
+                        .location = 4,
+                        .offset = sizeof(Point) + offsetof(Point, distanceFromStart),
+                        .format = AttributeFormat_Float
+                    }
+                }
+            }
+        }
+    };
+
+    return vertexLayout;
 }

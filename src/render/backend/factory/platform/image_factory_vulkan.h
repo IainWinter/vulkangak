@@ -2,11 +2,12 @@
 
 #include "render/backend/factory/image_factory.h"
 #include "render/backend/factory/buffer_factory.h"
+#include "render/backend/factory/command_buffer_factory.h"
 #include "render/backend/type/platform/image_vulkan.h"
 
 class ImageFactoryVulkan : public ImageFactory {
 public:
-    ImageFactoryVulkan(VkDevice logicalDevice, VmaAllocator allocator, VkCommandPool commandPool, VkQueue graphicsQueue, BufferFactory* bufferFactory);
+    ImageFactoryVulkan(VkDevice logicalDevice, VmaAllocator allocator, VkCommandPool commandPool, VkQueue graphicsQueue, BufferFactory* bufferFactory, CommandBufferFactory* commandBufferFactory);
     ~ImageFactoryVulkan();
 
     Image* createImage2DEmpty(u32 width, u32 height, ImageFormat format) override;
@@ -27,4 +28,5 @@ private:
     VkCommandPool m_commandPool;
     VkQueue m_graphicsQueue;
     BufferFactory* m_bufferFactory;
+    CommandBufferFactory* m_commandBufferFactory;
 };

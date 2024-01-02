@@ -1,10 +1,7 @@
 #pragma once
 
 #include "render/backend/factory/buffer_factory.h"
-#include "render/backend/command_buffer.h"
-#include "render/backend/shader.h" // only for vertex layout builder
-
-#include "render/vertex_layout.h"
+#include "render/backend/type/command_buffer.h"
 
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
@@ -44,5 +41,5 @@ private:
     BufferFactory* m_bufferFactory;
 
 public:
-    static std::vector<VulkanVertexLayout> getLayout();
+    static VertexLayout getLayout();
 };

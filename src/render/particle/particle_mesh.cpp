@@ -32,17 +32,57 @@ std::vector<std::pair<Particle::Instance, Particle>> ParticleSpawner::spawn(floa
     return particles;
 }
 
-std::vector<VulkanVertexLayout> ParticleMesh::getLayout() {
-    return VertexLayoutBuilder()
-        .buffer(sizeof(Vertex), false)
-            .attribute(0, offsetof(Vertex, pos), VK_FORMAT_R32G32_SFLOAT)
-            .attribute(1, offsetof(Vertex, uv),  VK_FORMAT_R32G32_SFLOAT)
-        .buffer(sizeof(Instance), true)
-            .attribute(2, offsetof(Instance, pos),      VK_FORMAT_R32G32B32_SFLOAT)
-            .attribute(3, offsetof(Instance, scale),    VK_FORMAT_R32G32_SFLOAT)
-            .attribute(4, offsetof(Instance, rotation), VK_FORMAT_R32G32B32_SFLOAT)
-            .attribute(5, offsetof(Instance, color),    VK_FORMAT_R32G32B32A32_SFLOAT)
-        .build();
+VertexLayout ParticleMesh::getLayout() {
+    VertexLayout vertexLayout = {
+        .buffers = {
+            {
+                .binding = 0,
+                .stride = sizeof(Vertex),
+                .instanced = false,
+                .attributes = {
+                    {
+                        .location = 0,
+                        .offset = offsetof(Vertex, pos),
+                        .format = AttributeFormat_Float2
+                    },
+                    {
+                        .location = 1,
+                        .offset = offsetof(Vertex, uv),
+                        .format = AttributeFormat_Float2
+                    }
+                }
+            },
+            {
+                .binding = 1,
+                .stride = sizeof(Instance),
+                .instanced = true,
+                .attributes = {
+                    {
+                        .location = 2,
+                        .offset = offsetof(Instance, pos),
+                        .format = AttributeFormat_Float3
+                    },
+                    {
+                        .location = 3,
+                        .offset = offsetof(Instance, scale),
+                        .format = AttributeFormat_Float2
+                    },
+                    {
+                        .location = 4,
+                        .offset = offsetof(Instance, rotation),
+                        .format = AttributeFormat_Float3
+                    },
+                    {
+                        .location = 5,
+                        .offset = offsetof(Instance, color),
+                        .format = AttributeFormat_Float4
+                    }
+                }
+            }
+        }
+    };
+
+    return vertexLayout;
 }
 
 ParticleMesh::ParticleMesh(BufferFactory* bufferFactory, size_t batchSize) 

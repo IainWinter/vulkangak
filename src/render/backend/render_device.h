@@ -1,18 +1,18 @@
 #pragma once
 
 #include "window.h"
-#include "shader.h"
-#include "command_buffer.h"
-#include "descriptor_group.h"
 #include "imgui_loop.h"
 
 #include "vk_mem_alloc.h"
 
 #include <vector>
 
+#include "factory/platform/buffer_factory_vulkan.h"
+#include "factory/platform/command_buffer_factory_vulkan.h"
+#include "factory/platform/descriptor_set_factory_vulkan.h"
 #include "factory/platform/image_factory_vulkan.h"
 #include "factory/platform/image_sampler_factory_vulkan.h"
-#include "factory/platform/buffer_factory_vulkan.h"
+#include "factory/platform/shader_factory_vulkan.h"
 
 struct VulkanSwapChainImage {
     VkImage image;
@@ -48,12 +48,6 @@ public:
 
     ImGuiLoop* newImGuiLoop();
 
-    DescriptorGroup* newDescriptorGroup(const std::vector<DescriptorBinding>& descriptors);
-
-    Shader* newShader(const VulkanShaderSource& source);
-    
-    CommandBuffer* newCommandBuffer();
-
     void updateDescriptorSet(const VkWriteDescriptorSet& write);
 
     // Block until a frame should be drawn
@@ -71,8 +65,6 @@ public:
     void waitUntilIdle();
 
     void waitUntilGraphicsQueueIdle();
-
-    void submitToGraphicsQueue(CommandBuffer* commandBuffer);
 
 private:
     // Need a system to allocate more sets when needed
@@ -94,8 +86,11 @@ private:
 
 public:
     BufferFactory* bufferFactory;
+    CommandBufferFactory* commandBufferFactory;
+    DescriptorSetFactory* descriptorSetFactory;
     ImageFactory* imageFactory;
     ImageSamplerFactory* imageSamplerFactory;
+    ShaderFactory* shaderFactory;
 
 private:
     Window* m_window;
