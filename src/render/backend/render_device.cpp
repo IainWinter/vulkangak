@@ -396,8 +396,11 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
 
 RenderDevice::~RenderDevice() {
     delete bufferFactory;
+    delete commandBufferFactory;
+    delete descriptorSetFactory;
     delete imageFactory;
     delete imageSamplerFactory;
+    delete shaderFactory;
 
     vmaDestroyAllocator(m_allocator);
 

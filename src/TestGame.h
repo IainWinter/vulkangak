@@ -324,15 +324,14 @@ public:
             delete o;
         }
 
+        delete m_particleMesh;
+
         device->bufferFactory->destroyBuffer(m_cameraUBO);
         device->imageFactory->destroyImage(m_image);
         device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
         device->descriptorSetFactory->destroyDescriptorSet(m_descriptor);
-
         device->shaderFactory->destroyShader(m_particleShader);
         device->shaderFactory->destroyShader(m_lineShader);
-
-        delete m_particleMesh;
     }
 
 private:
