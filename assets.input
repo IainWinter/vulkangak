@@ -13,5 +13,17 @@ line.vert
 line.frag
 ./build/shaders/line_frag.spv
 
+text_msdf.vert
+./build/shaders/text_msdf_vert.spv
+
+text_msdf.frag
+./build/shaders/text_msdf_frag.spv
+
+sprite.vert
+./build/shaders/sprite_vert.spv
+
+sprite.frag
+./build/shaders/sprite_frag.spv
+
 test.font
 ./src_assets/fonts/Arial.ttf

@@ -85,9 +85,9 @@ VertexLayout ParticleMesh::getLayout() {
     return vertexLayout;
 }
 
-ParticleMesh::ParticleMesh(BufferFactory* bufferFactory, size_t batchSize) 
-    : batchSize     (batchSize)
-    , bufferFactory (bufferFactory)
+ParticleMesh::ParticleMesh(BufferFactory* bufferFactory, u32 batchSize) 
+    : bufferFactory (bufferFactory)
+    , batchSize     (batchSize)
 {
     quadBuffer = bufferFactory->createVertexBufferFromVector<Vertex>(vertices);
     indexBuffer = bufferFactory->createIndexBufferFromVector(indices);
@@ -98,6 +98,16 @@ ParticleMesh::~ParticleMesh() {
     bufferFactory->destroyBuffer(quadBuffer);
     bufferFactory->destroyBuffer(indexBuffer);
     bufferFactory->destroyBuffer(instanceBuffer);
+}
+
+void ParticleMesh::add(const Instance& instance, const Particle& particle) {
+    // skip if the count is over the max size
+    if (count() + 1 >= batchSize) {
+        return;
+    }
+
+    instances.push_back(instance);
+    particles.push_back(particle);
 }
 
 void ParticleMesh::update(float deltaTime) {
@@ -133,32 +143,18 @@ void ParticleMesh::update(float deltaTime) {
     }
 }
 
-void ParticleMesh::sendToDevice() {
-    // If there is no data, skip
-    // Nothing will get drawn anyways
+void ParticleMesh::draw(CommandBuffer& cmd) {
     if (count() == 0) {
         return;
     }
     
-    instanceBuffer->setData(0, sizeof(Instance) * count(), instances.data());
-}
+    instanceBuffer->setDataVector(instances);
 
-void ParticleMesh::draw(CommandBuffer& cmd) {
     Buffer* buffers[2] = { quadBuffer, instanceBuffer };
 
     cmd.bindVertexBuffers(2, buffers);
     cmd.bindIndexBuffer(indexBuffer);
     cmd.drawIndexed(indices.size(), count());
-}
-
-void ParticleMesh::add(const Instance& instance, const Particle& particle) {
-    // skip if the count is over the max size
-    if (count() + 1 >= batchSize) {
-        return;
-    }
-
-    instances.push_back(instance);
-    particles.push_back(particle);
 }
 
 void ParticleMesh::remove(s32 index) {

@@ -20,7 +20,7 @@ layout (location = 5) in vec4 inInstanceColor;
 layout(location = 0) out vec2 fragUV;
 layout(location = 1) out vec4 fragColor;
 
-mat4 calcModel(vec3 pos, vec3 ang) {
+mat4 calcModel3d(vec3 pos, vec3 ang) {
     float cosX = cos(ang.x);
     float sinX = sin(ang.x);
     float cosY = cos(ang.y);
@@ -45,15 +45,8 @@ mat4 calcModel(vec3 pos, vec3 ang) {
 
     float m12 = pos.x;
     float m13 = pos.y;
-    float m14 = pos.z;// + float(gl_InstanceIndex) / 13000.0;
+    float m14 = pos.z;
     float m15 = 1.0;
-
-    //return mat4(
-    //    m00, m01, m02, m03,
-    //    m04, m05, m06, m07,
-    //    m08, m09, m10, m11,
-    //    m12, m13, m14, m15
-    //);
 
     mat4 m;
 
@@ -63,28 +56,10 @@ mat4 calcModel(vec3 pos, vec3 ang) {
     m[3] = vec4(m12, m13, m14, m15);
 
     return m;
-
-//    float sr = sin(rotation);
-//    float cr = cos(rotation);
-//
-//    float m00 = scale.x *  cr;
-//    float m10 = scale.x *  sr;
-//    float m01 = scale.y * -sr;
-//    float m11 = scale.y *  cr;
-//    float m03 = pos.x;
-//    float m13 = pos.y;
-//    float m23 = pos.z;
-//
-//    return mat4(
-//        m00, m10, 0.0, 0.0,
-//        m01, m11, 0.0, 0.0,
-//        0.0, 0.0, 1.0, 0.0,
-//        m03, m13, m23, 1.0
-//    );
 }
 
 void main() {
-    mat4 transform = calcModel(inInstancePos, inInstanceRotation);
+    mat4 transform = calcModel3d(inInstancePos, inInstanceRotation);
 
     gl_Position = cam.viewProj * PushConstants.model * transform * vec4(inPosition * inInstanceScale, 0.0, 1.0);
     fragUV = inUV;

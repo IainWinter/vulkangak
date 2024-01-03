@@ -14,4 +14,9 @@ public:
     virtual void* map(u32 offset, u32 size) = 0;
 
     virtual void unmap() = 0;
+
+    template<typename _t>
+    void setDataVector(const std::vector<_t>& data) {
+        setData(0, data.size() * sizeof(_t), data.data());
+    }
 };

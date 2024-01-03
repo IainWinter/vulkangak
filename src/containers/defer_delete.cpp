@@ -10,7 +10,7 @@ void basic_defer_deleter::flush() {
 
         if (count == 0) {
             type_erased_delete(ptr);
-            pop_back(queue, i);
+            pop_erase(queue, i);
         }
 
         count -= 1;

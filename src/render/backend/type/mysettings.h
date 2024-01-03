@@ -43,6 +43,8 @@ enum AttributeFormat {
     AttributeFormat_Float2,
     AttributeFormat_Float3,
     AttributeFormat_Float4,
+
+    AttributeFormat_Int,
 };
 
 enum DescriptorType {

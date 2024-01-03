@@ -11,27 +11,32 @@
 class SpriteMesh {
 public:
     struct Instance {
-        vec3 pos;
-        vec2 scale;
-        vec3 rotation;
-        vec4 color;
+        vec2 pos = vec2(0, 0);
+        vec2 scale = vec2(1, 1);
+        float rotation = 0.f;
+        vec4 color = vec4(1);
 
-        vec2 uvMin;
-        vec2 uvMax;
+        vec2 uvMin  = vec2(0, 0);
+        vec2 uvSize = vec2(1, 1);
 
-        // do not set this, it is set by the mesh
-        int id_internal;
+        // The texture to use for this instance.
+        // 0 is white
+        u32 textureIndex = 0;
     };
 
     struct Vertex {
-        vec2 pos, uv;
+        vec2 pos;
+        vec2 uv;
     };
 
-    SpriteMesh();
+    static VertexLayout getLayout();
+
+    SpriteMesh(BufferFactory* bufferFactory, u32 batchSize);
     ~SpriteMesh();
 
-    u32 add(const Instance& instance);
-    void remove(u32 id);
+    void add(const Instance& instance);
+    
+    void draw(CommandBuffer& cmd);
 
 private:
     const std::vector<Vertex> vertices = {
@@ -46,10 +51,12 @@ private:
         1, 2, 3
     };
 
-    VertexBuffer* quadBuffer;
-    IndexBuffer*  indexBuffer;
+    BufferFactory* bufferFactory;
+    u32 batchSize;
+
+    Buffer* quadBuffer;
+    Buffer* indexBuffer;
+    Buffer* instanceBuffer;
 
     std::vector<Instance> instances;
-
-    VertexBuffer* instanceBuffer;
 };

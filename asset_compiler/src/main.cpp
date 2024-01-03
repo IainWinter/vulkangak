@@ -10,6 +10,8 @@
 #include "load/shader_bytecode.h"
 #include "load/shader_program.h"
 
+#include <filesystem>
+
 int main(int argc, const char** argv) {
     if (argc < 3) {
         std::cout << "Usage: <input_file> <output_file>" << std::endl;
@@ -23,6 +25,15 @@ int main(int argc, const char** argv) {
     std::vector<AssetInput> assets = loadAssetInputs(input);
 
     std::cout << "Compiling assets:" << std::endl;
+
+    // make sure all files exist
+    for (const AssetInput& input: assets) {
+        if (!std::filesystem::exists(input.inputFile)) {
+            std::cout << "File does not exist: " << input.inputFile << std::endl;
+            std::cout << "Exiting...";
+            return 0;
+        }
+    }
 
     for (const AssetInput& input : assets) {
         std::cout << "\t" << input.assetNameInPackage << " <- " << input.inputFile << std::endl;

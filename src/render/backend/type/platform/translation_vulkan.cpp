@@ -34,6 +34,8 @@ static VkFormat s_formatMap[] = {
     VK_FORMAT_R32G32_SFLOAT,
     VK_FORMAT_R32G32B32_SFLOAT,
     VK_FORMAT_R32G32B32A32_SFLOAT,
+
+    VK_FORMAT_R32_SINT
 };
 
 static VkImageLayout s_imageLayoutMap[] = {

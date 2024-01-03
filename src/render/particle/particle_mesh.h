@@ -81,18 +81,17 @@ public:
 
     static VertexLayout getLayout();
 
-    ParticleMesh(BufferFactory* bufferFactory, size_t batchSize);
+    ParticleMesh(BufferFactory* bufferFactory, u32 batchSize);
     ~ParticleMesh();
 
     ParticleMesh(const ParticleMesh&) = delete;
     ParticleMesh& operator=(const ParticleMesh&) = delete;
 
+    void add(const Instance& instance, const Particle& particle);
+
     void update(float deltaTime);
 
-    void sendToDevice();
     void draw(CommandBuffer& cmd);
-
-    void add(const Instance& instance, const Particle& particle);
 
 private:
     // index is not stable so don't expose
@@ -121,7 +120,8 @@ private:
         1, 2, 3
     };
 
-    const int batchSize;
+    BufferFactory* bufferFactory;
+    u32 batchSize;
 
     Buffer* quadBuffer;
     Buffer* indexBuffer;
@@ -129,6 +129,4 @@ private:
 
     std::vector<Instance> instances; // gpu data
     std::vector<Particle> particles; // cpu data
-
-    BufferFactory* bufferFactory;
 };

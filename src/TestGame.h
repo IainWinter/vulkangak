@@ -6,13 +6,14 @@
 #include "game/game_interface.h"
 #include "game/input.h"
 
+#include "render/backend/render_device.h"
 #include "render/backend/imgui_loop.h"
 #include "imgui.h"
 
-#include "render/line/line_mesh.h"
 #include "render/particle/particle_mesh.h"
+#include "render/sprite/sprite_mesh.h"
+#include "render/line/line_mesh.h"
 #include "render/lens.h"
-#include "render/backend/render_device.h"
 
 #include "asset/package.h"
 #include "asset/image.h"
@@ -20,7 +21,7 @@
 #include "math/random.h"
 #include "glm/mat4x4.hpp"
 
-#include "containers/pop_back.h"
+#include "containers/pop_erase.h"
 #include "containers/defer_delete.h"
 
 #include "render/backend/type/image.h"
@@ -158,7 +159,6 @@ public:
         };
 
         m_particleShader = device->shaderFactory->createShader(particleProgramSource);
-        m_particleMesh = new ParticleMesh(device->bufferFactory, 13000);
 
         // Create line shader
 
@@ -173,13 +173,33 @@ public:
 
         m_lineShader = device->shaderFactory->createShader(lineProgramSource);
 
+        // Create sprite shader
+
+        ShaderProgramSource textProgramSource;
+        textProgramSource.vertexLayout = SpriteMesh::getLayout();
+        textProgramSource.descriptorSets = { m_descriptor };
+        textProgramSource.shaders = {
+            { ShaderStage_Vertex, package["sprite.vert"].binary },
+            { ShaderStage_Fragment, package["sprite.frag"].binary }
+        };
+
+        m_spriteShader = device->shaderFactory->createShader(textProgramSource);
+
+        // Create particle mesh
+
+        m_particleMesh = new ParticleMesh(device->bufferFactory, 13000);
+
+        // Create sprite
+
+        m_spriteMesh = new SpriteMesh(device->bufferFactory, 4);
+
         // Camera
 
         m_cameraUBO = device->bufferFactory->createUniformBufferEmptyFromType<CameraUBO>();
 
         // Load and write image to group
 
-        m_image = device->imageFactory->createImage2DFromAsset(package["test.image"]);
+        m_image = device->imageFactory->createImage2DFromAsset(package["test.font.atlas"]);
         m_imageSampler = device->imageSamplerFactory->createImageSampler();
 
         for (u32 i = 0; i < device->getFrameSyncInfo().framesInFlight(); i++) {
@@ -251,9 +271,16 @@ public:
 
             if (o->life > o->lifetime) {
                 delete_defer(o);
-                pop_back(m_orbitals, i);
+                pop_erase(m_orbitals, i);
             }
         }
+
+        // Add some sprite
+
+        SpriteMesh::Instance inst{};
+        inst.pos = vec2(20, 0);
+        inst.scale = vec2(16);
+        m_spriteMesh->add(inst);
     }
 
     void render(SimulationTick tick, VulkanFrameImage frame, RenderDevice* device, ImGuiLoop* imgui) override {
@@ -272,27 +299,27 @@ public:
         
         device->beginScreenRenderPass();
 
+        mat4 model = mat4(1.f);
+
         CommandBuffer& cmd = *frame.commandBuffer;
 
-        mat4 model = mat4(1.f);
+        // Draw particles
 
         cmd.setShader(m_particleShader);
         cmd.pushConstant(m_particleShader, 0, &model);
         cmd.bindDescriptorSet(m_particleShader, m_descriptor, frame.frameIndex);
 
-        m_particleMesh->sendToDevice();
         m_particleMesh->draw(cmd);
+
+        // Draw lines
 
         cmd.setShader(m_lineShader);
         cmd.bindDescriptorSet(m_lineShader, m_descriptor, frame.frameIndex);
 
-        LineShaderPushConstants linePush{};
-        linePush.model = model;
-
         for (Orbital* o : m_orbitals) {
-            cmd.pushConstant(m_lineShader, 0, &linePush);
-
             for (Arc* arc : o->arcs) {
+                LineShaderPushConstants linePush{};
+                linePush.model = model;
                 linePush.totalLength = arc->lineMesh->totalLength();
                 cmd.pushConstant(m_lineShader, 0, &linePush);
 
@@ -300,6 +327,21 @@ public:
                 arc->lineMesh->draw(cmd);
             }
         }
+
+        // Draw sprites
+
+        cmd.setShader(m_spriteShader);
+        cmd.bindDescriptorSet(m_spriteShader, m_descriptor, frame.frameIndex);
+
+        m_spriteMesh->draw(cmd);
+
+        // cmd.setShader(m_textShader);
+        // cmd.bindDescriptorSet(m_textShader, m_descriptor, frame.frameIndex);
+
+        // m_textMesh->sendToDevice();
+        // m_textMesh->draw(cmd);
+
+        // Draw imgui
 
         imgui->beginFrame();
         {
@@ -325,6 +367,7 @@ public:
         }
 
         delete m_particleMesh;
+        delete m_spriteMesh;
 
         device->bufferFactory->destroyBuffer(m_cameraUBO);
         device->imageFactory->destroyImage(m_image);
@@ -332,11 +375,11 @@ public:
         device->descriptorSetFactory->destroyDescriptorSet(m_descriptor);
         device->shaderFactory->destroyShader(m_particleShader);
         device->shaderFactory->destroyShader(m_lineShader);
+        device->shaderFactory->destroyShader(m_spriteShader);
     }
 
 private:
     CameraLens m_lens;
-    Buffer* m_cameraUBO;
 
     ParticleSpawner m_particleSpawner;
     ParticleMesh* m_particleMesh;
@@ -344,11 +387,18 @@ private:
 
     std::vector<Orbital*> m_orbitals;
     Shader* m_lineShader;
-    
-    DescriptorSet* m_descriptor;
+
+    SpriteMesh* m_spriteMesh;
+    Shader* m_spriteShader;
+    Image* m_spriteImage;
+
+    // TextMesh* m_textMesh;
+    // Image* m_textImage;
 
     Image* m_image;
     ImageSampler* m_imageSampler;
+    Buffer* m_cameraUBO;
+    DescriptorSet* m_descriptor;
 
     RenderDevice* m_device;
 };
