@@ -9,9 +9,11 @@ using namespace glm;
 class StructuredBinary {
 public:
     StructuredBinary(size_t initialSize) 
-        : bytes     (initialSize)
+        : bytes     ()
         , readIndex (0)
-    {}
+    {
+        bytes.reserve(initialSize);
+    }
 
     StructuredBinary(std::vector<char> binary) 
         : bytes     (binary)

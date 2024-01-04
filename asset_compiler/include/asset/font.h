@@ -45,7 +45,7 @@ struct FontAsset {
 
 		StructuredBinary binary(asset.binary);
 
-		glyphs.resize(asset.getInt("glyphsCount"));
+		glyphs.resize(asset.getInt("glyphCount"));
 		kerning.resize(asset.getInt("kerningCount"));
 
 		for (FontAsset::Glyph& glyph : glyphs) {
@@ -112,5 +112,15 @@ struct FontAsset {
 		}
 
 		return {};
+	}
+
+	float getKerning(int leftCharacter, int rightCharacter) const {
+		for (const auto& kerning : kerning) {
+			if (kerning.left == leftCharacter && kerning.right == rightCharacter) {
+				return kerning.amount;
+			}
+		}
+
+		return 0.0f;
 	}
 };

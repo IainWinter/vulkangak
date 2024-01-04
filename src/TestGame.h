@@ -13,6 +13,7 @@
 #include "render/particle/particle_mesh.h"
 #include "render/sprite/sprite_mesh.h"
 #include "render/line/line_mesh.h"
+#include "render/text/text_mesh.h"
 #include "render/lens.h"
 
 #include "asset/package.h"
@@ -175,15 +176,28 @@ public:
 
         // Create sprite shader
 
-        ShaderProgramSource textProgramSource;
-        textProgramSource.vertexLayout = SpriteMesh::getLayout();
-        textProgramSource.descriptorSets = { m_descriptor };
-        textProgramSource.shaders = {
+        ShaderProgramSource spriteProgramSource;
+        spriteProgramSource.vertexLayout = SpriteMesh::getLayout();
+        spriteProgramSource.descriptorSets = { m_descriptor };
+        spriteProgramSource.shaders = {
             { ShaderStage_Vertex, package["sprite.vert"].binary },
             { ShaderStage_Fragment, package["sprite.frag"].binary }
         };
 
-        m_spriteShader = device->shaderFactory->createShader(textProgramSource);
+        m_spriteShader = device->shaderFactory->createShader(spriteProgramSource);
+
+        // Create text shader
+
+        ShaderProgramSource textProgramSource;
+        textProgramSource.vertexLayout = TextMesh::getLayout();
+        textProgramSource.descriptorSets = { m_descriptor };
+        textProgramSource.shaders = {
+            { ShaderStage_Vertex, package["text_msdf.vert"].binary },
+            { ShaderStage_Fragment, package["text_msdf.frag"].binary }
+        };
+        textProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(mat4) }};
+
+        m_textShader = device->shaderFactory->createShader(textProgramSource);
 
         // Create particle mesh
 
@@ -192,6 +206,15 @@ public:
         // Create sprite
 
         m_spriteMesh = new SpriteMesh(device->bufferFactory, 4);
+
+        // Create text mesh
+
+        m_font = new Font();
+        m_font->data = package["test.font"];
+        //m_font->msdfAtlas = device->imageFactory->createImage2DFromAsset(package["test.font.atlas"]);
+
+        m_textMesh = new TextMesh(device->bufferFactory, m_font, 100);
+        m_textMesh->setString("Hello there");
 
         // Camera
 
@@ -335,6 +358,14 @@ public:
 
         m_spriteMesh->draw(cmd);
 
+        // Draw text
+
+        cmd.setShader(m_textShader);
+        cmd.pushConstant(m_textShader, 0, &model);
+        cmd.bindDescriptorSet(m_textShader, m_descriptor, frame.frameIndex);
+
+        m_textMesh->draw(cmd);
+
         // cmd.setShader(m_textShader);
         // cmd.bindDescriptorSet(m_textShader, m_descriptor, frame.frameIndex);
 
@@ -362,20 +393,29 @@ public:
     }
 
     void destroyStaticDeviceResources(RenderDevice* device) {
+        device->bufferFactory->destroyBuffer(m_cameraUBO);
+        
+        device->imageFactory->destroyImage(m_image);
+        device->imageFactory->destroyImage(m_font->msdfAtlas);
+
+        device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
+
+        device->descriptorSetFactory->destroyDescriptorSet(m_descriptor);
+
+        device->shaderFactory->destroyShader(m_particleShader);
+        device->shaderFactory->destroyShader(m_lineShader);
+        device->shaderFactory->destroyShader(m_spriteShader);
+        device->shaderFactory->destroyShader(m_textShader);
+
+        delete m_font;
+
         for (Orbital* o : m_orbitals) {
             delete o;
         }
 
         delete m_particleMesh;
         delete m_spriteMesh;
-
-        device->bufferFactory->destroyBuffer(m_cameraUBO);
-        device->imageFactory->destroyImage(m_image);
-        device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
-        device->descriptorSetFactory->destroyDescriptorSet(m_descriptor);
-        device->shaderFactory->destroyShader(m_particleShader);
-        device->shaderFactory->destroyShader(m_lineShader);
-        device->shaderFactory->destroyShader(m_spriteShader);
+        delete m_textMesh;
     }
 
 private:
@@ -392,8 +432,9 @@ private:
     Shader* m_spriteShader;
     Image* m_spriteImage;
 
-    // TextMesh* m_textMesh;
-    // Image* m_textImage;
+    Font* m_font;
+    TextMesh* m_textMesh;
+    Shader* m_textShader;
 
     Image* m_image;
     ImageSampler* m_imageSampler;

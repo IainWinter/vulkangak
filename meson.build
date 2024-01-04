@@ -17,6 +17,7 @@ sources = [
     'src/render/line/line_mesh.cpp',
     'src/render/particle/particle_mesh.cpp',
     'src/render/sprite/sprite_mesh.cpp',
+    'src/render/text/text_mesh.cpp',
 
     'src/render/backend/factory/platform/buffer_factory_vulkan.cpp',
     'src/render/backend/factory/platform/command_buffer_factory_vulkan.cpp',

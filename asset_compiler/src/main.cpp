@@ -48,7 +48,7 @@ int main(int argc, const char** argv) {
                 break;
             }
             case ASSET_FONT: {
-                loadFont(&package, input.assetNameInPackage, input.inputFile, 1.0f);
+                loadFont(&package, input.assetNameInPackage, input.inputFile, 32.0f);
                 break;
             }
             default: {
