@@ -86,7 +86,7 @@ struct DescriptorPoolLayout {
     u32 maxSetCount;
 };
 
-struct DescriptorSetLayout {
+struct DescriptorSetLayoutConfig { // Config is a bad name
     struct Binding {
         u32 location;
         ShaderStageBit stageBits;

@@ -1,8 +1,7 @@
 #include "render/backend/factory/platform/shader_factory_vulkan.h"
-#include "render/backend/type/platform/descriptor_set_vulkan.h"
+#include "render/backend/type/platform/descriptor_set_layout_vulkan.h"
 #include "render/backend/type/platform/translation_vulkan.h"
 #include "render/backend/type/platform/vk_error.h"
-
 
 ShaderFactoryVulkan::ShaderFactoryVulkan(VkDevice logicalDevice, VkRenderPass renderPass) 
     : m_logicalDevice (logicalDevice)
@@ -131,11 +130,11 @@ Shader* ShaderFactoryVulkan::createShader(const ShaderProgramSource& source) {
     }
 
     std::vector<VkDescriptorSetLayout> vkDescriptorSetLayouts;
-    vkDescriptorSetLayouts.reserve(source.descriptorSets.size());
+    vkDescriptorSetLayouts.reserve(source.descriptorSetLayouts.size());
 
-    for (const DescriptorSet* set : source.descriptorSets) {
-        DescriptorSetVulkan* vkSet = (DescriptorSetVulkan*)set;
-        vkDescriptorSetLayouts.push_back(vkSet->layout);
+    for (const DescriptorSetLayout* layout : source.descriptorSetLayouts) {
+        DescriptorSetLayoutVulkan* vkLayout = (DescriptorSetLayoutVulkan*)layout;
+        vkDescriptorSetLayouts.push_back(vkLayout->layout);
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};

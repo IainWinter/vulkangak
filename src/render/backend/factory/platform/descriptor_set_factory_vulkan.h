@@ -10,7 +10,7 @@ public:
     DescriptorSetFactoryVulkan(VkDevice logicalDevice, const DescriptorPoolLayout& poolLayout, FrameSyncInfo frameSyncInfo);
     ~DescriptorSetFactoryVulkan();
 
-    DescriptorSet* createDescriptorSet(const DescriptorSetLayout& layout) override;
+    DescriptorSet* createDescriptorSet(DescriptorSetLayout* layout) override;
 
     void destroyDescriptorSet(DescriptorSet* descriptorSet) override;
 

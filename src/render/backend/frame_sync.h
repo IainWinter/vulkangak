@@ -3,7 +3,7 @@
 #include "typedef.h"
 
 // For other classes to have info of which frame they are on
-// Mainly used for descriptor pool
+// kinda nutty
 // Should rename
 class FrameSyncInfo {
 public:

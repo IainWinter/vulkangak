@@ -1,5 +1,6 @@
 #include "render/backend/factory/platform/descriptor_set_factory_vulkan.h"
 #include "render/backend/type/platform/descriptor_set_vulkan.h"
+#include "render/backend/type/platform/descriptor_set_layout_vulkan.h"
 #include "render/backend/type/platform/translation_vulkan.h"
 #include "render/backend/type/platform/vk_error.h"
 #include <unordered_map>
@@ -34,27 +35,8 @@ DescriptorSetFactoryVulkan::~DescriptorSetFactoryVulkan() {
     vkDestroyDescriptorPool(m_logicalDevice, m_pool, nullptr);
 }
 
-DescriptorSet* DescriptorSetFactoryVulkan::createDescriptorSet(const DescriptorSetLayout& layout) {
-    std::vector<VkDescriptorSetLayoutBinding> vkBindings;
-    vkBindings.reserve(layout.bindings.size());
-
-    for (const DescriptorSetLayout::Binding& binding : layout.bindings) {
-        VkDescriptorSetLayoutBinding vkBinding{};
-        vkBinding.descriptorType = descriptorTypeMapVulkan(binding.type);
-        vkBinding.stageFlags = shaderStageFlagMapVulkan(binding.stageBits);
-        vkBinding.binding = binding.location;
-        vkBinding.descriptorCount = binding.elementCount;
-
-        vkBindings.push_back(vkBinding);
-    }
-
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = (u32)vkBindings.size();
-    layoutInfo.pBindings = vkBindings.data();
-
-    VkDescriptorSetLayout vkLayout;
-    vk(vkCreateDescriptorSetLayout(m_logicalDevice, &layoutInfo, nullptr, &vkLayout));
+DescriptorSet* DescriptorSetFactoryVulkan::createDescriptorSet(DescriptorSetLayout* layout) {
+    DescriptorSetLayoutVulkan* vkLayout = (DescriptorSetLayoutVulkan*)layout;
 
     std::vector<VkDescriptorSet> vkSets;
     vkSets.reserve(m_frameSyncInfo.framesInFlight());
@@ -66,7 +48,7 @@ DescriptorSet* DescriptorSetFactoryVulkan::createDescriptorSet(const DescriptorS
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = m_pool;
         allocInfo.descriptorSetCount = 1;
-        allocInfo.pSetLayouts = &vkLayout;
+        allocInfo.pSetLayouts = &vkLayout->layout;
 
         VkDescriptorSet vkSet;
         vk(vkAllocateDescriptorSets(m_logicalDevice, &allocInfo, &vkSet));
@@ -77,7 +59,6 @@ DescriptorSet* DescriptorSetFactoryVulkan::createDescriptorSet(const DescriptorS
     DescriptorSetVulkan* set = new DescriptorSetVulkan();
     set->logicalDevice = m_logicalDevice;
     set->frameSyncInfo = m_frameSyncInfo;
-    set->layout = vkLayout;
     set->sets = vkSets;
 
     return set;
@@ -86,7 +67,6 @@ DescriptorSet* DescriptorSetFactoryVulkan::createDescriptorSet(const DescriptorS
 void DescriptorSetFactoryVulkan::destroyDescriptorSet(DescriptorSet* descriptorSet) {
     DescriptorSetVulkan* set = (DescriptorSetVulkan*)descriptorSet;
 
-    vkDestroyDescriptorSetLayout(m_logicalDevice, set->layout, nullptr);
     vkFreeDescriptorSets(m_logicalDevice, m_pool, (u32)set->sets.size(), set->sets.data());
     delete set;
 }

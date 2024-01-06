@@ -350,7 +350,7 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     // factories
 
     DescriptorPoolLayout descriptorPoolLayout{};
-    descriptorPoolLayout.maxSetCount = 2;
+    descriptorPoolLayout.maxSetCount = 3;
     descriptorPoolLayout.pools = {
         { DescriptorType_UniformBuffer, 1 },
         { DescriptorType_ImageSampler, 2 }
@@ -359,6 +359,7 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     bufferFactory = new BufferFactoryVulkan(m_logicalDevice, m_allocator);
     commandBufferFactory = new CommandBufferFactoryVulkan(m_logicalDevice, m_commandPool, m_graphicsQueue, getFrameSyncInfo());
     descriptorSetFactory = new DescriptorSetFactoryVulkan(m_logicalDevice, descriptorPoolLayout, getFrameSyncInfo());
+    descriptorSetLayoutFactory = new DescriptorSetLayoutFactoryVulkan(m_logicalDevice);
     imageFactory = new ImageFactoryVulkan(m_logicalDevice, m_allocator, m_commandPool, m_graphicsQueue, bufferFactory, commandBufferFactory);
     imageSamplerFactory = new ImageSamplerFactoryVulkan(m_logicalDevice);
     shaderFactory = new ShaderFactoryVulkan(m_logicalDevice, m_renderPass);

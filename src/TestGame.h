@@ -129,23 +129,27 @@ public:
         // Store separate pools for each frame in flight so they can be reallocated when needed, this should only really
         // happen on a scene change, so its ok pause for stall for a few frames
 
-        DescriptorSetLayout viewLayout = {{
-            { 0, ShaderStage_Vertex, DescriptorType_UniformBuffer },
+        DescriptorSetLayoutConfig viewLayout = {{
+            { 0, ShaderStage_Vertex, DescriptorType_UniformBuffer }
         }};
 
-        DescriptorSetLayout materialLayout = {{
-            { 0, ShaderStage_Fragment, DescriptorType_ImageSampler },
+        DescriptorSetLayoutConfig materialLayout = {{
+            { 0, ShaderStage_Fragment, DescriptorType_ImageSampler }
         }};
 
-        m_viewSet = device->descriptorSetFactory->createDescriptorSet(viewLayout);
-        m_materialSet = device->descriptorSetFactory->createDescriptorSet(materialLayout);
+        m_viewSetLayout = device->descriptorSetLayoutFactory->createDescriptorSetLayout(viewLayout);
+        m_materialSetLayout = device->descriptorSetLayoutFactory->createDescriptorSetLayout(materialLayout);
+
+        m_viewSet = device->descriptorSetFactory->createDescriptorSet(m_viewSetLayout);
+        m_spriteMaterialSet = device->descriptorSetFactory->createDescriptorSet(m_materialSetLayout);
+        m_textMaterialSet = device->descriptorSetFactory->createDescriptorSet(m_materialSetLayout);
 
         // Create particle shader
 
         ShaderProgramSource particleProgramSource;
         particleProgramSource.vertexLayout = ParticleMesh::getLayout();
         particleProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(mat4) }};
-        particleProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        particleProgramSource.descriptorSetLayouts = { m_viewSetLayout, m_materialSetLayout };
         particleProgramSource.blendType = BlendType_Additive;
         particleProgramSource.shaders = {
             { ShaderStage_Vertex, package["particle.vert"].binary },
@@ -159,7 +163,7 @@ public:
         ShaderProgramSource lineProgramSource;
         lineProgramSource.vertexLayout = LineMesh::getLayout();
         lineProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(LineShaderPushConstants) }};
-        lineProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        lineProgramSource.descriptorSetLayouts = { m_viewSetLayout, m_materialSetLayout };
         lineProgramSource.blendType = BlendType_Alpha;
         lineProgramSource.shaders = {
             { ShaderStage_Vertex, package["line.vert"].binary },
@@ -172,7 +176,7 @@ public:
 
         ShaderProgramSource spriteProgramSource;
         spriteProgramSource.vertexLayout = SpriteMesh::getLayout();
-        spriteProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        spriteProgramSource.descriptorSetLayouts = { m_viewSetLayout, m_materialSetLayout };
         spriteProgramSource.blendType = BlendType_Alpha;
         spriteProgramSource.shaders = {
             { ShaderStage_Vertex, package["sprite.vert"].binary },
@@ -185,7 +189,7 @@ public:
 
         ShaderProgramSource textProgramSource;
         textProgramSource.vertexLayout = TextMesh::getLayout();
-        textProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        textProgramSource.descriptorSetLayouts = { m_viewSetLayout, m_materialSetLayout };
         textProgramSource.blendType = BlendType_Alpha;
         textProgramSource.shaders = {
             { ShaderStage_Vertex, package["text_msdf.vert"].binary },
@@ -308,24 +312,27 @@ public:
         cam.view = m_lens.GetViewMatrix();
         cam.proj = m_lens.GetProjectionMatrix();
         cam.viewProj = cam.proj * cam.view;
-        
+
+        // this isn't double buffered so bad        
         m_cameraUBO->setData(&cam);
+
+        // Update descriptor sets, I think these are fine?
         m_viewSet->writeUniformBuffer(0, m_cameraUBO);
-        
+        m_spriteMaterialSet->writeImage(0, m_image, m_imageSampler);
+        m_textMaterialSet->writeImage(0, m_font->msdfAtlas, m_imageSampler);
+
         device->beginScreenRenderPass();
 
         mat4 model = mat4(1.f);
 
         CommandBuffer& cmd = *frame.commandBuffer;
 
-        m_materialSet->writeImage(0, m_image, m_imageSampler);
-
         // Draw particles
 
         cmd.setShader(m_particleShader);
         cmd.pushConstant(m_particleShader, 0, &model);
         cmd.bindDescriptorSet(m_textShader, 0, m_viewSet);
-        cmd.bindDescriptorSet(m_textShader, 1, m_materialSet);
+        cmd.bindDescriptorSet(m_textShader, 1, m_spriteMaterialSet);
 
         m_particleMesh->draw(cmd);
 
@@ -333,7 +340,7 @@ public:
 
         cmd.setShader(m_lineShader);
         cmd.bindDescriptorSet(m_lineShader, 0, m_viewSet);
-        cmd.bindDescriptorSet(m_lineShader, 1, m_materialSet);
+        cmd.bindDescriptorSet(m_lineShader, 1, m_spriteMaterialSet);
 
         for (Orbital* o : m_orbitals) {
             for (Arc* arc : o->arcs) {
@@ -351,18 +358,16 @@ public:
 
         cmd.setShader(m_spriteShader);
         cmd.bindDescriptorSet(m_spriteShader, 0, m_viewSet);
-        cmd.bindDescriptorSet(m_spriteShader, 1, m_materialSet);
+        cmd.bindDescriptorSet(m_spriteShader, 1, m_spriteMaterialSet);
 
         m_spriteMesh->draw(cmd);
 
         // Draw text
 
-        m_materialSet->writeImage(0, m_font->msdfAtlas, m_imageSampler);
-
         cmd.setShader(m_textShader);
         cmd.pushConstant(m_textShader, 0, &model);
         cmd.bindDescriptorSet(m_textShader, 0, m_viewSet);
-        cmd.bindDescriptorSet(m_textShader, 1, m_materialSet);
+        cmd.bindDescriptorSet(m_textShader, 1, m_textMaterialSet);
 
         m_textMesh->draw(cmd);
 
@@ -394,8 +399,11 @@ public:
 
         device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
 
+        device->descriptorSetLayoutFactory->destroyDescriptorSetLayout(m_viewSetLayout);
+        device->descriptorSetLayoutFactory->destroyDescriptorSetLayout(m_materialSetLayout);
         device->descriptorSetFactory->destroyDescriptorSet(m_viewSet);
-        device->descriptorSetFactory->destroyDescriptorSet(m_materialSet);
+        device->descriptorSetFactory->destroyDescriptorSet(m_spriteMaterialSet);
+        device->descriptorSetFactory->destroyDescriptorSet(m_textMaterialSet);
 
         device->shaderFactory->destroyShader(m_particleShader);
         device->shaderFactory->destroyShader(m_lineShader);
@@ -417,9 +425,6 @@ private:
     CameraLens m_lens;
     Buffer* m_cameraUBO;
 
-    DescriptorSet* m_viewSet;
-    DescriptorSet* m_materialSet;
-
     ParticleSpawner m_particleSpawner;
     ParticleMesh* m_particleMesh;
     Shader* m_particleShader;
@@ -438,5 +443,14 @@ private:
     Image* m_image;
     ImageSampler* m_imageSampler;
 
+    // Everything to do with descriptors
+    DescriptorSetLayout* m_viewSetLayout;
+    DescriptorSetLayout* m_materialSetLayout;
+
+    DescriptorSet* m_viewSet;
+    DescriptorSet* m_spriteMaterialSet;
+    DescriptorSet* m_textMaterialSet;
+
+    // This is here because the Game interface is bad
     RenderDevice* m_device;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "render/backend/type/mysettings.h"
-#include "render/backend/type/descriptor_set.h"
+#include "render/backend/type/descriptor_set_layout.h"
 
 struct ShaderProgramSource {
     struct ShaderSource {
@@ -16,8 +16,8 @@ struct ShaderProgramSource {
 
     std::vector<ShaderSource> shaders;
     std::vector<PushConstant> pushConstants;
-    std::vector<DescriptorSet*> descriptorSets; // this is the only option that requires runtime because the asset compiler doesn't map out all descriptors right now right now
-    VertexLayout vertexLayout;
+    std::vector<DescriptorSetLayout*> descriptorSetLayouts; // this a runtime resource, but all data to create it can be known through an asset.
+    VertexLayout vertexLayout;                              // so this entire struct can now be an asset called ShaderProgramAsset :)
     BlendType blendType;
 };
 
