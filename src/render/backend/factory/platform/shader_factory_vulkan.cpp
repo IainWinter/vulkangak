@@ -87,25 +87,30 @@ Shader* ShaderFactoryVulkan::createShader(const ShaderProgramSource& source) {
     pipelineColorBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     pipelineColorBlendAttachmentInfo.blendEnable = VK_TRUE;
 
-    // regular
-    // pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    // pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    // pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    // pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-
-    // additive
-    // pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    // pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    // pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    // pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-
-    pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-
-    pipelineColorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
-    pipelineColorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+    switch (source.blendType) {
+        default:
+        case BlendType_None: {
+            break;
+        } 
+        case BlendType_Additive: {
+            pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            pipelineColorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+            pipelineColorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+            break;
+        }
+        case BlendType_Alpha: {
+            pipelineColorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            pipelineColorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            pipelineColorBlendAttachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            pipelineColorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            pipelineColorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+            pipelineColorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+            break;
+        }
+    }
 
     VkPipelineColorBlendStateCreateInfo pipelineColorBlending{};
     pipelineColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

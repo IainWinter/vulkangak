@@ -1,21 +1,22 @@
 #version 450
 
-layout(binding = 1) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform Camera {
     mat4 view;
     mat4 proj;
     mat4 viewProj;
-} cam;
+} camera;
 
-layout( push_constant ) uniform constants {
+layout(push_constant) uniform PushConstants {
 	mat4 model;
-} PushConstants;
+} pushConstants;
 
-layout (location = 0) in vec2 inPosition;
-layout (location = 1) in vec2 inUV;
-layout (location = 2) in vec3 inInstancePos;
-layout (location = 3) in vec2 inInstanceScale;
-layout (location = 4) in vec3 inInstanceRotation;
-layout (location = 5) in vec4 inInstanceColor;
+layout (location = 0) in vec2 vertPos;
+layout (location = 1) in vec2 vertUv;
+
+layout (location = 2) in vec3 instPos;
+layout (location = 3) in vec2 instScale;
+layout (location = 4) in vec3 instRotation;
+layout (location = 5) in vec4 instColor;
 
 layout(location = 0) out vec2 fragUV;
 layout(location = 1) out vec4 fragColor;
@@ -59,9 +60,9 @@ mat4 calcModel3d(vec3 pos, vec3 ang) {
 }
 
 void main() {
-    mat4 transform = calcModel3d(inInstancePos, inInstanceRotation);
+    mat4 transform = calcModel3d(instPos, instRotation);
 
-    gl_Position = cam.viewProj * PushConstants.model * transform * vec4(inPosition * inInstanceScale, 0.0, 1.0);
-    fragUV = inUV;
-    fragColor = inInstanceColor;
+    gl_Position = camera.viewProj * pushConstants.model * transform * vec4(vertPos * instScale, 0.0, 1.0);
+    fragUV = vertUv;
+    fragColor = instColor;
 }

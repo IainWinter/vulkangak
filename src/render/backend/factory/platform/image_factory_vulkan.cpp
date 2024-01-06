@@ -124,7 +124,7 @@ ImageVulkan* ImageFactoryVulkan::createImageVulkan2D(u32 width, u32 height, Imag
 
     VmaAllocationCreateInfo allocInfo{};
     allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-    allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+    //allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
     VmaAllocation vkAllocation;
     VkImage vkImage;

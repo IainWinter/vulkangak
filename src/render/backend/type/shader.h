@@ -16,8 +16,9 @@ struct ShaderProgramSource {
 
     std::vector<ShaderSource> shaders;
     std::vector<PushConstant> pushConstants;
-    std::vector<DescriptorSet*> descriptorSets;
+    std::vector<DescriptorSet*> descriptorSets; // this is the only option that requires runtime because the asset compiler doesn't map out all descriptors right now right now
     VertexLayout vertexLayout;
+    BlendType blendType;
 };
 
 class Shader {

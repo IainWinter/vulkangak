@@ -52,6 +52,12 @@ enum DescriptorType {
     DescriptorType_ImageSampler,
 };
 
+enum BlendType {
+    BlendType_None,
+    BlendType_Alpha,
+    BlendType_Additive,
+};
+
 struct VertexLayout {
     struct Buffer {
         struct Attribute {
@@ -82,10 +88,10 @@ struct DescriptorPoolLayout {
 
 struct DescriptorSetLayout {
     struct Binding {
+        u32 location;
         ShaderStageBit stageBits;
         DescriptorType type;
-        u32 elementCount;
-        u32 location;
+        u32 elementCount = 1; // 1+ for an array
     };
 
     std::vector<Binding> bindings;

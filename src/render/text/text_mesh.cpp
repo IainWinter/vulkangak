@@ -94,8 +94,12 @@ void TextMesh::addString(const std::string& text) {
         }
 
         Line::GlyphBounds bounds;
-        bounds.posMin = (glyph.posMin + cursor) * font->data.lineHeight;
-        bounds.posMax = (glyph.posMax + cursor) * font->data.lineHeight;
+
+        vec2 pMin = (glyph.posMin + cursor) * font->data.lineHeight;
+        vec2 pMax = (glyph.posMax + cursor) * font->data.lineHeight;
+
+        bounds.posMin = vec2(pMin.x, 1 - pMin.y); // need to flip Y because of vulkan
+        bounds.posMax = vec2(pMax.x, 1 - pMax.y);
         bounds.uvMin = glyph.uvMin;
         bounds.uvMax = glyph.uvMax;
 
@@ -148,20 +152,23 @@ void TextMesh::addString(const std::string& text) {
         }
 
         for (const Line::GlyphBounds& bounds : line.glyphs) {
+            // 0 2
+            // 1 3
+            
             Vertex v0 = {};
-            v0.pos = bounds.posMin + alignmentCursor;
-            v0.uv = bounds.uvMin;
+            v0.pos = vec2(bounds.posMin.x, bounds.posMax.y) + alignmentCursor;
+            v0.uv = vec2(bounds.uvMin.x, bounds.uvMax.y);
 
             Vertex v1 = {};
-            v1.pos = vec2(bounds.posMin.x, bounds.posMax.y) + alignmentCursor;
-            v1.uv = vec2(bounds.uvMin.x, bounds.uvMax.y);
+            v1.pos = bounds.posMin + alignmentCursor;
+            v1.uv = bounds.uvMin;
 
             Vertex v2 = {};
-            v2.pos = vec2(bounds.posMax.x, bounds.posMin.y) + alignmentCursor;
+            v2.pos = bounds.posMax + alignmentCursor;
             v2.uv = bounds.uvMax;
 
             Vertex v3 = {};
-            v3.pos = bounds.posMax + alignmentCursor;
+            v3.pos = vec2(bounds.posMax.x, bounds.posMin.y) + alignmentCursor;
             v3.uv = vec2(bounds.uvMax.x, bounds.uvMin.y);
 
             vertices.push_back(v0);

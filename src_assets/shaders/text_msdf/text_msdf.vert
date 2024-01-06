@@ -1,14 +1,14 @@
 #version 450
 
-layout(binding = 1) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform Camera {
     mat4 view;
     mat4 proj;
     mat4 viewProj;
-} cam;
+} camera;
 
-layout(push_constant) uniform constants {
+layout(push_constant) uniform PushConstants {
 	mat4 model;
-} PushConstants;
+} pushConstants;
 
 layout (location = 0) in vec2 vertPos;
 layout (location = 1) in vec2 vertUv;
@@ -17,5 +17,5 @@ layout(location = 0) out vec2 fragUv;
 
 void main() {
     fragUv = vertUv;
-    gl_Position = cam.viewProj * PushConstants.model * vec4(vertPos, 0, 1);
+    gl_Position = camera.viewProj * pushConstants.model * vec4(vertPos, 0, 1);
 }

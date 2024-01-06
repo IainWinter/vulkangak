@@ -8,6 +8,6 @@ class DescriptorSet {
 public:
     virtual ~DescriptorSet() = default;
 
-    virtual void writeImage(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler) = 0;
-    virtual void writeUniformBuffer(int frameIndex, int bindingIndex, Buffer* uniformBuffer) = 0;
+    virtual void writeImage(int bindingIndex, Image* image, ImageSampler* sampler) = 0;
+    virtual void writeUniformBuffer(int bindingIndex, Buffer* uniformBuffer) = 0;
 };

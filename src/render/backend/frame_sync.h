@@ -7,6 +7,12 @@
 // Should rename
 class FrameSyncInfo {
 public:
+    FrameSyncInfo() 
+        : m_frameIndex     (nullptr)
+        , m_imageIndex     (nullptr) 
+        , m_framesInFlight (nullptr)
+    {}
+
     FrameSyncInfo(u32* frameIndex, u32* imageIndex, const u32* framesInFlight) 
         : m_frameIndex     (frameIndex)
         , m_imageIndex     (imageIndex) 

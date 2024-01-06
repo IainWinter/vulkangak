@@ -1,13 +1,13 @@
 #pragma once
 
 #include "render/backend/factory/descriptor_set_factory.h"
-#include "render/backend./frame.h"
+#include "render/backend/frame_sync.h"
 #include "vulkan/vulkan.h"
 
 // This factory holds a single pool
 class DescriptorSetFactoryVulkan : public DescriptorSetFactory {
 public:
-    DescriptorSetFactoryVulkan(VkDevice logicalDevice, const DescriptorPoolLayout& poolLayout, const FrameSyncInfo& frameSyncInfo);
+    DescriptorSetFactoryVulkan(VkDevice logicalDevice, const DescriptorPoolLayout& poolLayout, FrameSyncInfo frameSyncInfo);
     ~DescriptorSetFactoryVulkan();
 
     DescriptorSet* createDescriptorSet(const DescriptorSetLayout& layout) override;

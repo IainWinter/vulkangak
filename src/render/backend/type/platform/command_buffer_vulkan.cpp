@@ -127,13 +127,13 @@ void CommandBufferVulkan::pushConstant(Shader* shader, u32 index, const void* da
     vkCmdPushConstants(commandBuffer, vkShader->pipelineLayout, pushConstant.stageFlags, pushConstant.offset, pushConstant.size, data);
 }
 
-void CommandBufferVulkan::bindDescriptorSet(Shader* shader, DescriptorSet* descriptorSet, u32 frameIndex) {
+void CommandBufferVulkan::bindDescriptorSet(Shader* shader, u32 setIndex, DescriptorSet* descriptorSet) {
     ShaderVulkan* vkShader = static_cast<ShaderVulkan*>(shader);
     DescriptorSetVulkan* vkDescriptorSet = static_cast<DescriptorSetVulkan*>(descriptorSet);
 
-    VkDescriptorSet set = vkDescriptorSet->sets[frameIndex];
+    VkDescriptorSet set = vkDescriptorSet->sets[frameSyncInfo.frameIndex()];
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkShader->pipelineLayout, 0, 1, &set, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkShader->pipelineLayout, setIndex, 1, &set, 0, nullptr);
 }
 
 void CommandBufferVulkan::bindVertexBuffers(u32 count, Buffer* vertexBuffers[]) {

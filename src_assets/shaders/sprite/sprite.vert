@@ -1,10 +1,10 @@
 #version 450
 
-layout(binding = 1) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform Camera {
     mat4 view;
     mat4 proj;
     mat4 viewProj;
-} cam;
+} camera;
 
 layout(location = 0) in vec2  vertPos;
 layout(location = 1) in vec2  vertUv;
@@ -47,5 +47,5 @@ void main() {
     fragUv = vertUv * instUvSize + instUvMin;
     fragColor = instColor;
     fragTextureIndex = instTextureIndex;
-    gl_Position = cam.viewProj * transform * vec4(vertPos, 0.0, 1.0);
+    gl_Position = camera.viewProj * transform * vec4(vertPos, 0.0, 1.0);
 }

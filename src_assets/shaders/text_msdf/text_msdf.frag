@@ -1,6 +1,6 @@
 #version 450
 
-layout (binding = 0) uniform sampler2D msdfSampler;
+layout (set = 1, binding = 0) uniform sampler2D msdfSampler;
 
 layout(location = 0) in vec2 fragUv;
 
@@ -23,9 +23,9 @@ void main() {
     float screenPxDistance = screenPxRange() * (sd - 0.5);
     float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
 
-    if (opacity < 0.001) {
-        discard;
-    }
+    //if (opacity == 0.0) {
+    //    discard;
+    //}
 
     outColor = vec4(1, 1, 1, opacity);
 }

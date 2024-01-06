@@ -23,7 +23,7 @@ public:
 
     virtual void setShader(Shader* shader) = 0;
     virtual void pushConstant(Shader* shader, u32 index, const void* data) = 0;
-    virtual void bindDescriptorSet(Shader* shader, DescriptorSet* descriptorSet, u32 frameIndex) = 0;
+    virtual void bindDescriptorSet(Shader* shader, u32 setIndex, DescriptorSet* descriptorSet) = 0;
 
     virtual void bindVertexBuffers(u32 count, Buffer* vertexBuffers[]) = 0;
     virtual void bindIndexBuffer(Buffer* indexBuffer) = 0;

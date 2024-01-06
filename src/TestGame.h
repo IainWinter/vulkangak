@@ -129,31 +129,24 @@ public:
         // Store separate pools for each frame in flight so they can be reallocated when needed, this should only really
         // happen on a scene change, so its ok pause for stall for a few frames
 
-        DescriptorSetLayout setLayout = {
-            .bindings = {
-                {
-                    .stageBits = ShaderStage_Fragment,
-                    .type = DescriptorType_ImageSampler,
-                    .elementCount = 1,
-                    .location = 0,
-                },
-                {
-                    .stageBits = ShaderStage_Vertex,
-                    .type = DescriptorType_UniformBuffer,
-                    .elementCount = 1,
-                    .location = 1,
-                }
-            }
-        };
+        DescriptorSetLayout viewLayout = {{
+            { 0, ShaderStage_Vertex, DescriptorType_UniformBuffer },
+        }};
 
-        m_descriptor = device->descriptorSetFactory->createDescriptorSet(setLayout);
+        DescriptorSetLayout materialLayout = {{
+            { 0, ShaderStage_Fragment, DescriptorType_ImageSampler },
+        }};
+
+        m_viewSet = device->descriptorSetFactory->createDescriptorSet(viewLayout);
+        m_materialSet = device->descriptorSetFactory->createDescriptorSet(materialLayout);
 
         // Create particle shader
 
         ShaderProgramSource particleProgramSource;
         particleProgramSource.vertexLayout = ParticleMesh::getLayout();
         particleProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(mat4) }};
-        particleProgramSource.descriptorSets = { m_descriptor };
+        particleProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        particleProgramSource.blendType = BlendType_Additive;
         particleProgramSource.shaders = {
             { ShaderStage_Vertex, package["particle.vert"].binary },
             { ShaderStage_Fragment, package["particle.frag"].binary }
@@ -166,7 +159,8 @@ public:
         ShaderProgramSource lineProgramSource;
         lineProgramSource.vertexLayout = LineMesh::getLayout();
         lineProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(LineShaderPushConstants) }};
-        lineProgramSource.descriptorSets = { m_descriptor };
+        lineProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        lineProgramSource.blendType = BlendType_Alpha;
         lineProgramSource.shaders = {
             { ShaderStage_Vertex, package["line.vert"].binary },
             { ShaderStage_Fragment, package["line.frag"].binary }
@@ -178,7 +172,8 @@ public:
 
         ShaderProgramSource spriteProgramSource;
         spriteProgramSource.vertexLayout = SpriteMesh::getLayout();
-        spriteProgramSource.descriptorSets = { m_descriptor };
+        spriteProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        spriteProgramSource.blendType = BlendType_Alpha;
         spriteProgramSource.shaders = {
             { ShaderStage_Vertex, package["sprite.vert"].binary },
             { ShaderStage_Fragment, package["sprite.frag"].binary }
@@ -190,7 +185,8 @@ public:
 
         ShaderProgramSource textProgramSource;
         textProgramSource.vertexLayout = TextMesh::getLayout();
-        textProgramSource.descriptorSets = { m_descriptor };
+        textProgramSource.descriptorSets = { m_viewSet, m_materialSet };
+        textProgramSource.blendType = BlendType_Alpha;
         textProgramSource.shaders = {
             { ShaderStage_Vertex, package["text_msdf.vert"].binary },
             { ShaderStage_Fragment, package["text_msdf.frag"].binary }
@@ -211,10 +207,10 @@ public:
 
         m_font = new Font();
         m_font->data = package["test.font"];
-        //m_font->msdfAtlas = device->imageFactory->createImage2DFromAsset(package["test.font.atlas"]);
+        m_font->msdfAtlas = device->imageFactory->createImage2DFromAsset(package[m_font->data.atlasPath]);
 
         m_textMesh = new TextMesh(device->bufferFactory, m_font, 100);
-        m_textMesh->setString("Hello there");
+        m_textMesh->setString("Hello there\n123\n456\n789");
 
         // Camera
 
@@ -222,12 +218,8 @@ public:
 
         // Load and write image to group
 
-        m_image = device->imageFactory->createImage2DFromAsset(package["test.font.atlas"]);
+        m_image = device->imageFactory->createImage2DFromAsset(package["test.image"]);
         m_imageSampler = device->imageSamplerFactory->createImageSampler();
-
-        for (u32 i = 0; i < device->getFrameSyncInfo().framesInFlight(); i++) {
-            m_descriptor->writeImage(i, 0, m_image, m_imageSampler);
-        }
 
         m_device = device;
     }
@@ -318,7 +310,7 @@ public:
         cam.viewProj = cam.proj * cam.view;
         
         m_cameraUBO->setData(&cam);
-        m_descriptor->writeUniformBuffer(frame.frameIndex, 1, m_cameraUBO);
+        m_viewSet->writeUniformBuffer(0, m_cameraUBO);
         
         device->beginScreenRenderPass();
 
@@ -326,18 +318,22 @@ public:
 
         CommandBuffer& cmd = *frame.commandBuffer;
 
+        m_materialSet->writeImage(0, m_image, m_imageSampler);
+
         // Draw particles
 
         cmd.setShader(m_particleShader);
         cmd.pushConstant(m_particleShader, 0, &model);
-        cmd.bindDescriptorSet(m_particleShader, m_descriptor, frame.frameIndex);
+        cmd.bindDescriptorSet(m_textShader, 0, m_viewSet);
+        cmd.bindDescriptorSet(m_textShader, 1, m_materialSet);
 
         m_particleMesh->draw(cmd);
 
         // Draw lines
 
         cmd.setShader(m_lineShader);
-        cmd.bindDescriptorSet(m_lineShader, m_descriptor, frame.frameIndex);
+        cmd.bindDescriptorSet(m_lineShader, 0, m_viewSet);
+        cmd.bindDescriptorSet(m_lineShader, 1, m_materialSet);
 
         for (Orbital* o : m_orbitals) {
             for (Arc* arc : o->arcs) {
@@ -354,23 +350,21 @@ public:
         // Draw sprites
 
         cmd.setShader(m_spriteShader);
-        cmd.bindDescriptorSet(m_spriteShader, m_descriptor, frame.frameIndex);
+        cmd.bindDescriptorSet(m_spriteShader, 0, m_viewSet);
+        cmd.bindDescriptorSet(m_spriteShader, 1, m_materialSet);
 
         m_spriteMesh->draw(cmd);
 
         // Draw text
 
+        m_materialSet->writeImage(0, m_font->msdfAtlas, m_imageSampler);
+
         cmd.setShader(m_textShader);
         cmd.pushConstant(m_textShader, 0, &model);
-        cmd.bindDescriptorSet(m_textShader, m_descriptor, frame.frameIndex);
+        cmd.bindDescriptorSet(m_textShader, 0, m_viewSet);
+        cmd.bindDescriptorSet(m_textShader, 1, m_materialSet);
 
         m_textMesh->draw(cmd);
-
-        // cmd.setShader(m_textShader);
-        // cmd.bindDescriptorSet(m_textShader, m_descriptor, frame.frameIndex);
-
-        // m_textMesh->sendToDevice();
-        // m_textMesh->draw(cmd);
 
         // Draw imgui
 
@@ -400,7 +394,8 @@ public:
 
         device->imageSamplerFactory->destroyImageSampler(m_imageSampler);
 
-        device->descriptorSetFactory->destroyDescriptorSet(m_descriptor);
+        device->descriptorSetFactory->destroyDescriptorSet(m_viewSet);
+        device->descriptorSetFactory->destroyDescriptorSet(m_materialSet);
 
         device->shaderFactory->destroyShader(m_particleShader);
         device->shaderFactory->destroyShader(m_lineShader);
@@ -420,6 +415,10 @@ public:
 
 private:
     CameraLens m_lens;
+    Buffer* m_cameraUBO;
+
+    DescriptorSet* m_viewSet;
+    DescriptorSet* m_materialSet;
 
     ParticleSpawner m_particleSpawner;
     ParticleMesh* m_particleMesh;
@@ -438,8 +437,6 @@ private:
 
     Image* m_image;
     ImageSampler* m_imageSampler;
-    Buffer* m_cameraUBO;
-    DescriptorSet* m_descriptor;
 
     RenderDevice* m_device;
 };

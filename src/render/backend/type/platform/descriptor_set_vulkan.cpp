@@ -4,11 +4,11 @@
 #include "render/backend/type/platform/image_vulkan.h"
 #include "render/backend/type/platform/image_sampler_vulkan.h"
 
-void DescriptorSetVulkan::writeImage(int frameIndex, int bindingIndex, Image* image, ImageSampler* sampler) {
+void DescriptorSetVulkan::writeImage(int bindingIndex, Image* image, ImageSampler* sampler) {
     ImageVulkan* imageVulkan = (ImageVulkan*)image;
     ImageSamplerVulkan* samplerVulkan = (ImageSamplerVulkan*)sampler;
     
-    VkDescriptorSet set = sets.at(frameIndex);
+    VkDescriptorSet set = sets.at(frameSyncInfo.frameIndex());
 
     VkDescriptorImageInfo imageInfo{};
     imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -27,10 +27,10 @@ void DescriptorSetVulkan::writeImage(int frameIndex, int bindingIndex, Image* im
     vkUpdateDescriptorSets(logicalDevice, 1, &write, 0, nullptr);
 }
 
-void DescriptorSetVulkan::writeUniformBuffer(int frameIndex, int bindingIndex, Buffer* uniformBuffer) {
+void DescriptorSetVulkan::writeUniformBuffer(int bindingIndex, Buffer* uniformBuffer) {
     BufferVulkan* uniformBufferVulkan = (BufferVulkan*)uniformBuffer;
 
-    VkDescriptorSet set = sets.at(frameIndex);
+    VkDescriptorSet set = sets.at(frameSyncInfo.frameIndex());
 
     VkDescriptorBufferInfo bufferInfo{};
     bufferInfo.buffer = uniformBufferVulkan->buffer;

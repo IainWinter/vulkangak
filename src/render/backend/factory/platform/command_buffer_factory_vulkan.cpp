@@ -4,10 +4,11 @@
 #include "render/backend/type/platform/command_buffer_vulkan.h"
 #include "render/backend/type/platform/vk_error.h"
 
-CommandBufferFactoryVulkan::CommandBufferFactoryVulkan(VkDevice logicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue) 
+CommandBufferFactoryVulkan::CommandBufferFactoryVulkan(VkDevice logicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, FrameSyncInfo frameSyncInfo) 
     : m_logicalDevice (logicalDevice) 
     , m_commandPool   (commandPool)
     , m_graphicsQueue (graphicsQueue)
+    , m_frameSyncInfo (frameSyncInfo)
 {}
 
 CommandBufferFactoryVulkan::~CommandBufferFactoryVulkan() {
@@ -26,6 +27,7 @@ CommandBuffer* CommandBufferFactoryVulkan::createCommandBuffer() {
     CommandBufferVulkan* commandBuffer = new CommandBufferVulkan();
     commandBuffer->commandBuffer = vkCommandBuffer;
     commandBuffer->queue = m_graphicsQueue;
+    commandBuffer->frameSyncInfo = m_frameSyncInfo;
 
     return commandBuffer;
 }

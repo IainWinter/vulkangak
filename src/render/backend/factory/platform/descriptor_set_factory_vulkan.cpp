@@ -4,7 +4,7 @@
 #include "render/backend/type/platform/vk_error.h"
 #include <unordered_map>
 
-DescriptorSetFactoryVulkan::DescriptorSetFactoryVulkan(VkDevice logicalDevice, const DescriptorPoolLayout& poolLayout, const FrameSyncInfo& frameSyncInfo)
+DescriptorSetFactoryVulkan::DescriptorSetFactoryVulkan(VkDevice logicalDevice, const DescriptorPoolLayout& poolLayout, FrameSyncInfo frameSyncInfo)
     : m_logicalDevice  (logicalDevice)
     , m_frameSyncInfo  (frameSyncInfo)
     , m_pool           (VK_NULL_HANDLE)
@@ -76,6 +76,7 @@ DescriptorSet* DescriptorSetFactoryVulkan::createDescriptorSet(const DescriptorS
 
     DescriptorSetVulkan* set = new DescriptorSetVulkan();
     set->logicalDevice = m_logicalDevice;
+    set->frameSyncInfo = m_frameSyncInfo;
     set->layout = vkLayout;
     set->sets = vkSets;
 

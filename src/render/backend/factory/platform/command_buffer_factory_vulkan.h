@@ -1,6 +1,7 @@
 #pragma once
 
 #include "render/backend/factory/command_buffer_factory.h"
+#include "render/backend/frame_sync.h"
 #include "vulkan/vulkan.h"
 
 // for now just pass queue to factory
@@ -9,7 +10,7 @@
 
 class CommandBufferFactoryVulkan : public CommandBufferFactory {
 public:
-    CommandBufferFactoryVulkan(VkDevice logicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue);
+    CommandBufferFactoryVulkan(VkDevice logicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, FrameSyncInfo frameSyncInfo);
     ~CommandBufferFactoryVulkan();
 
     CommandBuffer* createCommandBuffer() override;
@@ -20,4 +21,5 @@ private:
     VkDevice m_logicalDevice;
     VkCommandPool m_commandPool;
     VkQueue m_graphicsQueue;
+    FrameSyncInfo m_frameSyncInfo;
 };
