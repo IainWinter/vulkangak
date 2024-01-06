@@ -155,7 +155,7 @@ ImageVulkan* ImageFactoryVulkan::createImageVulkan2D(u32 width, u32 height, Imag
     image->width = width;
     image->height = height;
     image->depth = 1;
-    image->imageBufferSize = width * height * vkFormat.pixelSize;
+    image->imageBufferSize = width * height * vkFormat.elementSize;
 
     return image;
 }

@@ -12,11 +12,12 @@ static VkDescriptorType s_descriptorTypeMap[] = {
     VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 };
 
+// sizes are now in bytes
 static VulkanImageFormat s_imageFormatMap[] = {
-    { 8, 24, VK_FORMAT_R8G8B8_SRGB },
-    { 8, 24, VK_FORMAT_R8G8B8_UNORM },
-    { 8, 32, VK_FORMAT_R8G8B8A8_SRGB },
-    { 8, 32, VK_FORMAT_R8G8B8A8_UNORM }
+    { 1, 3, VK_FORMAT_R8G8B8_SRGB },
+    { 1, 3, VK_FORMAT_R8G8B8_UNORM },
+    { 1, 4, VK_FORMAT_R8G8B8A8_SRGB },
+    { 1, 4, VK_FORMAT_R8G8B8A8_UNORM }
 };
 
 static VkSampleCountFlagBits s_imageSampleCountMap[] = {
