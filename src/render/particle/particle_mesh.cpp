@@ -1,4 +1,5 @@
 #include "particle_mesh.h"
+#include <cmath>
 
 std::vector<std::pair<Particle::Instance, Particle>> ParticleSpawner::spawn(float deltaTime) {
     float dtPerSpawn = 1.f / numberPerSecond;
