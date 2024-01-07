@@ -58,4 +58,6 @@ void SpriteMesh::draw(CommandBuffer& cmd) {
     cmd.bindVertexBuffers(2, buffers);
     cmd.bindIndexBuffer(indexBuffer);
     cmd.drawIndexed(indices.size(), instances.size());
+
+    instances.clear();
 }

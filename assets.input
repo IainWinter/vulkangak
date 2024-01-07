@@ -25,5 +25,8 @@ sprite.vert
 sprite.frag
 ./build/shaders/sprite_frag.spv
 
+sprite_circle.frag
+./build/shaders/sprite_circle_frag.spv
+
 test.font
 ./src_assets/fonts/Arial.ttf

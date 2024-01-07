@@ -119,16 +119,20 @@ public:
 
         input->CreateAxis("Mouse Click")
             .MapButton(MOUSE_LEFT);
+
+        input->CreateAxis("Move")
+            .Map(Key_W, vec2( 0, -1))
+            .Map(Key_S, vec2( 0,  1))
+            .Map(Key_A, vec2(-1,  0))
+            .Map(Key_D, vec2( 1,  0))
+            .Normalized();
     }
 
     void createStaticDeviceResources(RenderDevice* device) override {
         AssetPackage package = loadPackage("./assets.bin");
 
-        // each AssetPackage will have a list of all the sets needed for the shaders contained in it
-        // this will allow the device to allocate what it needs to create the pools and set layouts
-        // Store separate pools for each frame in flight so they can be reallocated when needed, this should only really
-        // happen on a scene change, so its ok pause for stall for a few frames
-
+        // load all descriptors
+        
         DescriptorSetLayoutConfig viewLayout = {{
             { 0, ShaderStage_Vertex, DescriptorType_UniformBuffer }
         }};
@@ -139,10 +143,6 @@ public:
 
         m_viewSetLayout = device->descriptorSetLayoutFactory->createDescriptorSetLayout(viewLayout);
         m_materialSetLayout = device->descriptorSetLayoutFactory->createDescriptorSetLayout(materialLayout);
-
-        m_viewSet = device->descriptorSetFactory->createDescriptorSet(m_viewSetLayout);
-        m_spriteMaterialSet = device->descriptorSetFactory->createDescriptorSet(m_materialSetLayout);
-        m_textMaterialSet = device->descriptorSetFactory->createDescriptorSet(m_materialSetLayout);
 
         // Create particle shader
 
@@ -185,6 +185,19 @@ public:
 
         m_spriteShader = device->shaderFactory->createShader(spriteProgramSource);
 
+        // Create circle sprite shader
+
+        ShaderProgramSource circleSpriteProgramSource;
+        circleSpriteProgramSource.vertexLayout = SpriteMesh::getLayout();
+        circleSpriteProgramSource.descriptorSetLayouts = { m_viewSetLayout, m_materialSetLayout };
+        circleSpriteProgramSource.blendType = BlendType_Alpha;
+        circleSpriteProgramSource.shaders = {
+            { ShaderStage_Vertex, package["sprite.vert"].binary },
+            { ShaderStage_Fragment, package["sprite_circle.frag"].binary }
+        };
+
+        m_circleSpriteShader = device->shaderFactory->createShader(circleSpriteProgramSource);
+
         // Create text shader
 
         ShaderProgramSource textProgramSource;
@@ -198,6 +211,12 @@ public:
         textProgramSource.pushConstants = {{ ShaderStage_Vertex, sizeof(mat4) }};
 
         m_textShader = device->shaderFactory->createShader(textProgramSource);
+
+        // Create descriptor sets
+
+        m_viewSet = device->descriptorSetFactory->createDescriptorSet(m_viewSetLayout);
+        m_spriteMaterialSet = device->descriptorSetFactory->createDescriptorSet(m_materialSetLayout);
+        m_textMaterialSet = device->descriptorSetFactory->createDescriptorSet(m_materialSetLayout);
 
         // Create particle mesh
 
@@ -233,19 +252,15 @@ public:
 
         ParticleSpawner spawner{};
         spawner.particle.lifetime = 1.8f / 4.f;
-        
         spawner.instance.rotation.z = PI / 2.f;
-
         spawner.particle.enableScalingByLife = true;
         spawner.particle.initialScale = vec2(0.12f);
         spawner.particle.finalScale = vec2(0);
         spawner.particle.factorScale = 4.056f;
-        
         spawner.particle.enableTintByLife = true;
         spawner.particle.initialTint = vec4(1, .6, 0, 1);
         spawner.particle.finalTint = vec4(0, 0, 1, .1);
         spawner.particle.factorTint = 3.648f;
-
         spawner.position = { vec3(.4, .4, 0) };
         spawner.rotation = { vec3(0, 0, 0), vec3(0, 0, 7.8) };
         spawner.velocity = { vec3(10, 10, 0) };
@@ -296,9 +311,12 @@ public:
 
         // Add some sprite
 
+        static vec2 pos = vec2(0, 0);
+        pos += input->GetAxis("Move") * tick.deltaTime * 10.f;
+
         SpriteMesh::Instance inst{};
-        inst.pos = vec2(20, 0);
-        inst.scale = vec2(16);
+        inst.pos = pos;
+        inst.scale = vec2(4);
         m_spriteMesh->add(inst);
     }
 
@@ -356,7 +374,15 @@ public:
 
         // Draw sprites
 
-        cmd.setShader(m_spriteShader);
+        // cmd.setShader(m_spriteShader);
+        // cmd.bindDescriptorSet(m_spriteShader, 0, m_viewSet);
+        // cmd.bindDescriptorSet(m_spriteShader, 1, m_spriteMaterialSet);
+
+        // m_spriteMesh->draw(cmd);
+
+        // Draw circles
+
+        cmd.setShader(m_circleSpriteShader);
         cmd.bindDescriptorSet(m_spriteShader, 0, m_viewSet);
         cmd.bindDescriptorSet(m_spriteShader, 1, m_spriteMaterialSet);
 
@@ -408,6 +434,7 @@ public:
         device->shaderFactory->destroyShader(m_particleShader);
         device->shaderFactory->destroyShader(m_lineShader);
         device->shaderFactory->destroyShader(m_spriteShader);
+        device->shaderFactory->destroyShader(m_circleSpriteShader);
         device->shaderFactory->destroyShader(m_textShader);
 
         delete m_font;
@@ -422,31 +449,36 @@ public:
     }
 
 private:
+    ParticleSpawner m_particleSpawner;
+
+    // Text
+    Font* m_font;
+
+    // Camera
     CameraLens m_lens;
     Buffer* m_cameraUBO;
 
-    ParticleSpawner m_particleSpawner;
-    ParticleMesh* m_particleMesh;
-    Shader* m_particleShader;
-
-    std::vector<Orbital*> m_orbitals;
-    Shader* m_lineShader;
-
-    SpriteMesh* m_spriteMesh;
-    Shader* m_spriteShader;
-    Image* m_spriteImage;
-
-    Font* m_font;
+    // Meshes
     TextMesh* m_textMesh;
-    Shader* m_textShader;
+    SpriteMesh* m_spriteMesh;
+    ParticleMesh* m_particleMesh;
+    std::vector<Orbital*> m_orbitals;
 
+    // Images
     Image* m_image;
+    Image* m_spriteImage;
     ImageSampler* m_imageSampler;
+
+    // Shaders
+    Shader* m_lineShader;
+    Shader* m_particleShader;
+    Shader* m_spriteShader;
+    Shader* m_circleSpriteShader;
+    Shader* m_textShader;
 
     // Everything to do with descriptors
     DescriptorSetLayout* m_viewSetLayout;
     DescriptorSetLayout* m_materialSetLayout;
-
     DescriptorSet* m_viewSet;
     DescriptorSet* m_spriteMaterialSet;
     DescriptorSet* m_textMaterialSet;

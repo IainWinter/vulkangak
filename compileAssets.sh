@@ -13,5 +13,6 @@ glslc ./src_assets/shaders/text_msdf/text_msdf.frag -o ./build/shaders/text_msdf
 
 glslc ./src_assets/shaders/sprite/sprite.vert -o ./build/shaders/sprite_vert.spv
 glslc ./src_assets/shaders/sprite/sprite.frag -o ./build/shaders/sprite_frag.spv
+glslc ./src_assets/shaders/sprite/sprite_circle.frag -o ./build/shaders/sprite_circle_frag.spv
 
 ./asset_compiler/build/lithAssetCompiler ./assets.input ./build/assets.bin
