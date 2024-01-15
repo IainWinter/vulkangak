@@ -45,6 +45,7 @@ include_dirs = [
 ]
 
 deps = [
+	dependency('fmt'),
 	dependency('glm'),
 	dependency('sdl2', default_options: { 'test': false }),
     dependency('imgui'),
