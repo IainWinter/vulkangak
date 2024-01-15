@@ -5,14 +5,16 @@
 
 class ShaderFactoryVulkan : public ShaderFactory {
 public:
-    ShaderFactoryVulkan(VkDevice logicalDevice, VkRenderPass renderPass);
+    ShaderFactoryVulkan(VkDevice logicalDevice, RenderPass* defaultRenderPass);
     ~ShaderFactoryVulkan();
 
     Shader* createShader(const ShaderProgramSource& source) override;
+
+    Shader* createShaderRenderPass(RenderPass* renderPass, const ShaderProgramSource& source);
 
     void destroyShader(Shader* shader) override;
 
 private:
     VkDevice m_logicalDevice;
-    VkRenderPass m_renderPass;
+    RenderPass* m_defaultRenderPass;
 };

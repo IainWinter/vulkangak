@@ -24,7 +24,7 @@ struct ShaderProgramAsset {
         Type type;
         uint32_t elementCount;
         uint32_t location;
-        uint32_t set;         
+        uint32_t set;
     };
 
     std::vector<char> vertexBytecode;

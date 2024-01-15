@@ -10,7 +10,6 @@ BufferFactoryVulkan::BufferFactoryVulkan(VkDevice logicalDevice, VmaAllocator al
 {}
 
 BufferFactoryVulkan::~BufferFactoryVulkan() {
-    
 }
 
 Buffer* BufferFactoryVulkan::createBufferEmpty(BufferType type, size_t size) {

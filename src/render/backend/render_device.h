@@ -11,9 +11,11 @@
 #include "factory/platform/command_buffer_factory_vulkan.h"
 #include "factory/platform/descriptor_set_factory_vulkan.h"
 #include "factory/platform/descriptor_set_layout_factory_vulkan.h"
+#include "factory/platform/frame_buffer_factory_vulkan.h"
 #include "factory/platform/image_factory_vulkan.h"
 #include "factory/platform/image_sampler_factory_vulkan.h"
 #include "factory/platform/shader_factory_vulkan.h"
+#include "factory/platform/render_pass_factory_vulkan.h"
 
 struct VulkanSwapChainImage {
     VkImage image;
@@ -78,7 +80,6 @@ private:
     // Their order is the order they should be called
 
     void chooseSurfaceConfig();
-    void createPresentRenderPass();
     void createSwapchain();
     void destroySwapchain();
 
@@ -90,8 +91,10 @@ public:
     CommandBufferFactory* commandBufferFactory;
     DescriptorSetFactory* descriptorSetFactory;
     DescriptorSetLayoutFactory* descriptorSetLayoutFactory;
+    FrameBufferFactory* frameBufferFactory;
     ImageFactory* imageFactory;
     ImageSamplerFactory* imageSamplerFactory;
+    RenderPassFactory* renderPassFactory;
     ShaderFactory* shaderFactory;
 
 private:
@@ -123,7 +126,8 @@ private:
 
     // RenderPass stuff, this is the render pass for drawing to the screen
     // should this be a RenderPass?
-    VkRenderPass m_renderPass;
+    //VkRenderPass m_renderPass;
+    RenderPass* m_renderPass;
 
     // Command pools, could put in a vector for each thread ID
     // for now, just store one

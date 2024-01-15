@@ -19,6 +19,8 @@ public:
 
     void destroyImage(Image* image) override;
 
+    std::vector<Image*> getSwapChainImages();
+
 private:
     ImageVulkan* createImageVulkan2D(u32 width, u32 height, ImageFormat format, ImageSampleCount sampleCount);
 

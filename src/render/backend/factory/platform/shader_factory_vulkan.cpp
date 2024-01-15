@@ -1,17 +1,24 @@
 #include "render/backend/factory/platform/shader_factory_vulkan.h"
 #include "render/backend/type/platform/descriptor_set_layout_vulkan.h"
+#include "render/backend/type/platform/render_pass_vulkan.h"
 #include "render/backend/type/platform/translation_vulkan.h"
 #include "render/backend/type/platform/vk_error.h"
 
-ShaderFactoryVulkan::ShaderFactoryVulkan(VkDevice logicalDevice, VkRenderPass renderPass) 
-    : m_logicalDevice (logicalDevice)
-    , m_renderPass    (renderPass)
+ShaderFactoryVulkan::ShaderFactoryVulkan(VkDevice logicalDevice, RenderPass* defaultRenderPass) 
+    : m_logicalDevice     (logicalDevice)
+    , m_defaultRenderPass (defaultRenderPass)
 {}
 
 ShaderFactoryVulkan::~ShaderFactoryVulkan() {
 }
 
 Shader* ShaderFactoryVulkan::createShader(const ShaderProgramSource& source) {
+    return createShaderRenderPass(m_defaultRenderPass, source);
+}
+
+Shader* ShaderFactoryVulkan::createShaderRenderPass(RenderPass* renderPass, const ShaderProgramSource& source) {
+    RenderPassVulkan* vkRenderPass = static_cast<RenderPassVulkan*>(renderPass);
+
     // Assembly, this defines the type of primitive to draw
 
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyInfo{};
@@ -182,7 +189,7 @@ Shader* ShaderFactoryVulkan::createShader(const ShaderProgramSource& source) {
     pipelineInfo.pColorBlendState = &pipelineColorBlending;
     pipelineInfo.pDynamicState = &pipelineDynamicStateInfo;
     pipelineInfo.layout = vkPipelineLayout;
-    pipelineInfo.renderPass = m_renderPass;
+    pipelineInfo.renderPass = vkRenderPass->renderPass;
     pipelineInfo.subpass = 0;
 
     VkPipeline vkPipeline;

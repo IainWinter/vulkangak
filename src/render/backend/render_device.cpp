@@ -15,6 +15,7 @@
 #include "vk_mem_alloc.h"
 
 #include "render/backend/type/platform/command_buffer_vulkan.h"
+#include "render/backend/type/platform/render_pass_vulkan.h"
 
 struct VulkanSwapChainAvailableConfigs {
     VkSurfaceCapabilitiesKHR capabilities;
@@ -316,19 +317,7 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     vkGetDeviceQueue(m_logicalDevice, m_graphicsQueueIndex, 0, &m_graphicsQueue);
     vkGetDeviceQueue(m_logicalDevice, m_presentQueueIndex, 0, &m_presentQueue);
 
-    // Create the swap chain
-
-    // This has to be done before creating the render pass
-    chooseSurfaceConfig();
-
-    // This has to be done before creating the swap chain framebuffers
-    createPresentRenderPass();
-
-    createSwapchain();
-
-    // back to stuff that makes sense
     // It seems like there needs to be a single command pool for each thread
-
     // Create a command pool for each thread, for now just one (and not in a list)
 
     VkCommandPoolCreateInfo commandPoolInfo{};
@@ -360,9 +349,17 @@ RenderDevice::RenderDevice(Window* window, bool useDebug)
     commandBufferFactory = new CommandBufferFactoryVulkan(m_logicalDevice, m_commandPool, m_graphicsQueue, getFrameSyncInfo());
     descriptorSetFactory = new DescriptorSetFactoryVulkan(m_logicalDevice, descriptorPoolLayout, getFrameSyncInfo());
     descriptorSetLayoutFactory = new DescriptorSetLayoutFactoryVulkan(m_logicalDevice);
+    frameBufferFactory = new FrameBufferFactoryVulkan(m_logicalDevice);
     imageFactory = new ImageFactoryVulkan(m_logicalDevice, m_allocator, m_commandPool, m_graphicsQueue, bufferFactory, commandBufferFactory);
     imageSamplerFactory = new ImageSamplerFactoryVulkan(m_logicalDevice);
+    renderPassFactory = new RenderPassFactoryVulkan(m_logicalDevice);
+
+    m_renderPass = renderPassFactory->createRenderPass();
     shaderFactory = new ShaderFactoryVulkan(m_logicalDevice, m_renderPass);
+
+    // Create the swap chain
+    chooseSurfaceConfig(); // This has to be done before creating the render pass
+    createSwapchain();
 
     // Create frames in flight
 
@@ -413,7 +410,9 @@ RenderDevice::~RenderDevice() {
     m_frames.clear();
 
     vkDestroyCommandPool(m_logicalDevice, m_commandPool, nullptr);
-    vkDestroyRenderPass(m_logicalDevice, m_renderPass, nullptr);
+    
+    renderPassFactory->destroyRenderPass(m_renderPass);
+    //vkDestroyRenderPass(m_logicalDevice, m_renderPass, nullptr);
 
     destroySwapchain();
 
@@ -487,50 +486,6 @@ void RenderDevice::chooseSurfaceConfig() {
     m_swapChainTransform = surfaceConfigs.capabilities.currentTransform;
 }
 
-void RenderDevice::createPresentRenderPass() {
-    // Create a render pass for this, this could could be replaces with new RenderPass?
-    // Im not sure if that should be stored in a framebuffer thought, it is confusing
-    // For now just hard code it here
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = m_format.format;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef; // layout (location = 0)
-    
-    // This is to fix a sync issue between frames?
-    VkSubpassDependency dependencyInfo{};
-    dependencyInfo.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependencyInfo.dstSubpass = 0;
-    dependencyInfo.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencyInfo.srcAccessMask = 0;
-    dependencyInfo.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependencyInfo.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependencyInfo;
-
-    vk(vkCreateRenderPass(m_logicalDevice, &renderPassInfo, nullptr, &m_renderPass));
-}
-
 void RenderDevice::createSwapchain() {
     // For multi-sampling create offscreen color and depth image / attachments
 
@@ -573,6 +528,8 @@ void RenderDevice::createSwapchain() {
 
     vk(vkCreateSwapchainKHR(m_logicalDevice, &swapChainInfo, nullptr, &m_swapChain));
 
+    // could use factories for this
+
     u32 imageCount;
     vk(vkGetSwapchainImagesKHR(m_logicalDevice, m_swapChain, &imageCount, nullptr));
     std::vector<VkImage> images(imageCount);
@@ -586,10 +543,6 @@ void RenderDevice::createSwapchain() {
         viewInfo.image = images[i];
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = m_format.format;
-        viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
         viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
@@ -601,7 +554,7 @@ void RenderDevice::createSwapchain() {
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = m_renderPass;
+        framebufferInfo.renderPass = static_cast<RenderPassVulkan*>(m_renderPass)->renderPass;
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = &view;
         framebufferInfo.width = m_extent.width;
@@ -621,8 +574,6 @@ void RenderDevice::createSwapchain() {
 }
 
 void RenderDevice::destroySwapchain() {
-
-
     for (VulkanSwapChainImage& image : m_images) {
         vkDestroyFramebuffer(m_logicalDevice, image.framebuffer, nullptr);
         vkDestroyImageView(m_logicalDevice, image.view, nullptr);
@@ -660,7 +611,7 @@ ImGuiLoop* RenderDevice::newImGuiLoop() {
         m_instance,
         m_physicalDevice,
         m_logicalDevice,
-        m_renderPass,
+        static_cast<RenderPassVulkan*>(m_renderPass)->renderPass,
         m_commandPool,
         m_graphicsQueue,
         m_graphicsQueueIndex,
@@ -756,11 +707,14 @@ void RenderDevice::beginScreenRenderPass() {
     VulkanSwapChainImage image = m_images[m_currentImageIndex];
     VkCommandBuffer commandBuffer = static_cast<CommandBufferVulkan*>(frame.commandBuffer)->commandBuffer;
 
+    //frame.commandBuffer->beginRenderPass(image.framebuffer);
+    VkRenderPass renderPass = static_cast<RenderPassVulkan*>(m_renderPass)->renderPass;
+
     VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
 
     VkRenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.renderPass = m_renderPass;
+    renderPassBeginInfo.renderPass = renderPass;
     renderPassBeginInfo.framebuffer = image.framebuffer;
     renderPassBeginInfo.renderArea.offset = {0, 0};
     renderPassBeginInfo.renderArea.extent = m_extent;

@@ -23,8 +23,10 @@ sources = [
     'src/render/backend/factory/platform/command_buffer_factory_vulkan.cpp',
     'src/render/backend/factory/platform/descriptor_set_factory_vulkan.cpp',
     'src/render/backend/factory/platform/descriptor_set_layout_factory_vulkan.cpp',
+    'src/render/backend/factory/platform/frame_buffer_factory_vulkan.cpp',
     'src/render/backend/factory/platform/image_factory_vulkan.cpp',
     'src/render/backend/factory/platform/image_sampler_factory_vulkan.cpp',
+    'src/render/backend/factory/platform/render_pass_factory_vulkan.cpp',
     'src/render/backend/factory/platform/shader_factory_vulkan.cpp',
 
     'src/render/backend/type/platform/buffer_vulkan.cpp',

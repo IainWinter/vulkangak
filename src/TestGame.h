@@ -144,6 +144,8 @@ public:
         m_viewSetLayout = device->descriptorSetLayoutFactory->createDescriptorSetLayout(viewLayout);
         m_materialSetLayout = device->descriptorSetLayoutFactory->createDescriptorSetLayout(materialLayout);
 
+        m_renderPassLoRes = device->renderPassFactory->createRenderPass();
+
         // Create particle shader
 
         ShaderProgramSource particleProgramSource;
@@ -156,7 +158,7 @@ public:
             { ShaderStage_Fragment, package["particle.frag"].binary }
         };
 
-        m_particleShader = device->shaderFactory->createShader(particleProgramSource);
+        m_particleShader = device->shaderFactory->createShaderRenderPass(m_renderPassLoRes, particleProgramSource);
 
         // Create line shader
 
@@ -482,6 +484,9 @@ private:
     DescriptorSet* m_viewSet;
     DescriptorSet* m_spriteMaterialSet;
     DescriptorSet* m_textMaterialSet;
+
+    // do a pixel process
+    RenderPass* m_renderPassLoRes;
 
     // This is here because the Game interface is bad
     RenderDevice* m_device;
